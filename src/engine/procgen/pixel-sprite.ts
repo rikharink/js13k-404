@@ -69,11 +69,11 @@ export class Mask {
 }
 
 interface SpriteOptions {
-  colored: boolean;
-  edgeBrightness: number;
-  colorVariations: number;
-  brightnessNoise: number;
-  saturation: number;
+  colored?: boolean;
+  edgeBrightness?: number;
+  colorVariations?: number;
+  brightnessNoise?: number;
+  saturation?: number;
 }
 
 export class Sprite {
@@ -228,7 +228,7 @@ export class Sprite {
   renderPixelData() {
     const isVerticalGradient = Math.random() > 0.5;
     const saturation = Math.max(
-      Math.min(Math.random() * this.options.saturation, 1),
+      Math.min(Math.random() * this.options.saturation!, 1),
       0
     );
     let hue = Math.random();
@@ -252,7 +252,7 @@ export class Sprite {
       );
 
       // Only change the color sometimes (values above 0.8 are less likely than others)
-      if (isNewColor > 1 - this.options.colorVariations) {
+      if (isNewColor > 1 - this.options.colorVariations!) {
         hue = Math.random();
       }
 
@@ -273,17 +273,17 @@ export class Sprite {
             // Fade brightness away towards the edges
             let brightness =
               Math.sin((u / ulen) * Math.PI) *
-                (1 - this.options.brightnessNoise) +
-              Math.random() * this.options.brightnessNoise;
+                (1 - this.options.brightnessNoise!) +
+              Math.random() * this.options.brightnessNoise!;
 
             // Get the RGB color value
             this.hslToRgb(hue, saturation, brightness, rgb);
 
             // If this is an edge, then darken the pixel
             if (val === -1) {
-              rgb.r *= this.options.edgeBrightness;
-              rgb.g *= this.options.edgeBrightness;
-              rgb.b *= this.options.edgeBrightness;
+              rgb.r *= this.options.edgeBrightness!;
+              rgb.g *= this.options.edgeBrightness!;
+              rgb.b *= this.options.edgeBrightness!;
             }
           } else {
             // Not colored, simply output black

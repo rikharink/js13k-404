@@ -3,7 +3,8 @@
 ## Must Have
 
 * [ ] define simple core gameplay-loop that fits with theme
-* [ ] Integrate pixel-sprite in engine so i can add & render generated sprites over tilemap
+* [ ] Integrate pixel-sprite in engine so i easily  add & render generated sprites over tilemap
+* [ ] Scene renderer / manager
 * [ ] make sprites moveable
 * [ ] make player-sprite keyboard moveable
 

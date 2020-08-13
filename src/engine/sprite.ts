@@ -2,14 +2,14 @@ import { orthographic, translate, scale, translation } from "./math/m4";
 
 const dst = new Float32Array(16);
 
-export class Sprite {
+export class GameSprite {
   private gl: WebGL2RenderingContext;
   private width: number;
   private height: number;
   private frames: number;
   private tint: [number, number, number, number];
   private timePerFrame: number;
-  private img: HTMLImageElement;
+  private img: TexImageSource;
   private program: WebGLProgram;
   private currentFrame: number;
   private texX: number;
@@ -35,7 +35,7 @@ export class Sprite {
   constructor(
     gl: WebGL2RenderingContext,
     shader: WebGLProgram,
-    img: HTMLImageElement,
+    img: TexImageSource,
     position: [number, number],
     shape: [number, number],
     frames: number,
@@ -124,7 +124,7 @@ export class Sprite {
   }
 
   render(deltaTime: number) {
-    this.animate(deltaTime);
+    // this.animate(deltaTime);
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
     this.gl.enableVertexAttribArray(this.positionAttributeLocation);
     this.gl.vertexAttribPointer(

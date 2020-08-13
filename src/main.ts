@@ -1,17 +1,23 @@
+import { GameSprite } from './engine/sprite';
 import "./style/main.css";
 import { setupCanvas } from "./engine/util";
 import { TileMap, Tile } from "./engine/tile-map";
+import { Mask, Sprite} from "./engine/procgen/pixel-sprite";
+import { createProgram } from "./engine/gl/util";
+import spriteVertex from "./engine/gl/shaders/colored-texture.vert";
+import spriteFragment from "./engine/gl/shaders/colored-texture.frag";
 
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 const gl = canvas.getContext("webgl2");
 
 let tilemap: TileMap;
+let spaceshipSprite: GameSprite;
 
 function gameloop(now: number) {
   requestAnimationFrame(gameloop);
   setupCanvas(gl!, now);
-  console.log(tilemap.mapHeight);
-  tilemap.render(tilemap.mapWidth / 2 | 0, tilemap.mapHeight / 2 | 0);
+  // tilemap.render(tilemap.mapWidth / 2 | 0, tilemap.mapHeight / 2 | 0);
+  spaceshipSprite.render(now);
 }
 
 function getTileData(
@@ -99,6 +105,27 @@ function main() {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
   tilemap = new TileMap(gl, texture!, shape, tilesize, tm);
+
+
+  const spaceship = new Mask([
+    0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 1, 1,
+    0, 0, 0, 0, 1,-1,
+    0, 0, 0, 1, 1,-1,
+    0, 0, 0, 1, 1,-1,
+    0, 0, 1, 1, 1,-1,
+    0, 1, 1, 1, 2, 2,
+    0, 1, 1, 1, 2, 2,
+    0, 1, 1, 1, 2, 2,
+    0, 1, 1, 1, 1,-1,
+    0, 0, 0, 1, 1, 1,
+    0, 0, 0, 0, 0, 0
+], 6, 12, true, false);
+
+  const sprite = new Sprite(spaceship, {colored : true});
+  const shader = createProgram(gl, spriteVertex, spriteFragment);
+  spaceshipSprite = new GameSprite(gl, shader, sprite.canvas, [0, 0], [12, 12], 0, [1, 1, 1, 1], 0);
+  spaceshipSprite.prepare();
   requestAnimationFrame(gameloop);
 }
 
