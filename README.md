@@ -1,2 +1,15 @@
-# js13k-template
-My personal template for the js13k gamejam
+# 404 Spell Not Found
+
+## Build
+
+Development build:
+
+```sh
+yarn start
+```
+
+Final build:
+
+```sh
+yarn dist
+```

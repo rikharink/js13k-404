@@ -1,24 +1,21 @@
 const EPSILON = 0.00001;
 
-export function cross(a, b, dst) {
+export type v3 = [number, number, number] | Float32Array;
+
+export function cross(a: v3, b: v3, dst: v3): v3 {
   return copy3(
     a[1] * b[2] - a[2] * b[1],
     a[2] * b[0] - a[0] * b[2],
     a[0] * b[1] - a[1] * b[0],
-    dst || new Float32Array(3)
+    dst
   );
 }
 
-export function subtract(a, b, dst) {
-  return copy3(
-    a[0] - b[0],
-    a[1] - b[1],
-    a[2] - b[2],
-    dst || new Float32Array(3)
-  );
+export function subtract(a: v3, b: v3, dst: v3): v3 {
+  return copy3(a[0] - b[0], a[1] - b[1], a[2] - b[2], dst);
 }
 
-export function normalize(v, dst) {
+export function normalize(v: v3, dst: v3) {
   const length = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
   // make sure we don't divide by 0.
   if (length > EPSILON) {
@@ -29,11 +26,11 @@ export function normalize(v, dst) {
       dst || new Float32Array(3)
     );
   } else {
-    return copy3(0, 0, 0, dst || new Float32Array(3));
+    return copy3(0, 0, 0, dst);
   }
 }
 
-function copy3(a, b, c, dst) {
+function copy3(a: number, b: number, c: number, dst: v3) {
   dst[0] = a;
   dst[1] = b;
   dst[2] = c;

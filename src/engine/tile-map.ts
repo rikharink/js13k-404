@@ -5,16 +5,19 @@ import { orthographic, scale, identity, translate, zRotate } from "./math/m4";
 
 const dst = new Float32Array(16);
 
-function r(min, max) {
-  if (max === undefined) {
-    max = min;
-    min = 0;
-  }
-  return min + (max - min) * Math.random();
-}
-
 export class Tile {
-  constructor(textureLocation, xFlip = false, yFlip = false, xySwap = false) {
+  public u: number;
+  public v: number;
+  public xFlip: boolean;
+  public yFlip: boolean;
+  public xySwap: boolean;
+
+  constructor(
+    textureLocation: [number, number],
+    xFlip = false,
+    yFlip = false,
+    xySwap = false
+  ) {
     this.u = textureLocation[0];
     this.v = textureLocation[1];
     this.xFlip = xFlip;
@@ -22,7 +25,7 @@ export class Tile {
     this.xySwap = xySwap;
   }
 
-  flags() {
+  flags(): number {
     return (
       (this.xFlip ? 128 : 0) | (this.yFlip ? 64 : 0) | (this.xySwap ? 32 : 0)
     );
@@ -30,7 +33,39 @@ export class Tile {
 }
 
 export class TileMap {
-  constructor(gl, tileset, tilesetShape, tilesize, map, tint = [1, 1, 1, 1]) {
+  private gl: WebGL2RenderingContext;
+  private tileset: WebGLTexture;
+  private tilesetWidth: number;
+  private tilesetHeight: number;
+  private tilesize: number;
+  private map: Tile[][];
+  private tint: [number, number, number, number];
+  public  mapWidth: number;
+  public mapHeight: number;
+  public width: number;
+  public height: number;
+  private program: WebGLProgram;
+  private positionLocation: number;
+  private matrixLocation: WebGLUniformLocation | null;
+  private texMatrixLocation: WebGLUniformLocation | null;
+  private tilemapLocation: WebGLUniformLocation | null;
+  private tilesetLocation: WebGLUniformLocation | null;
+  private tilemapSizeLocation: WebGLUniformLocation | null;
+  private tilesetSizeLocation: WebGLUniformLocation | null;
+  private tintLocation: WebGLUniformLocation | null;
+  private vao: WebGLVertexArrayObject | null;
+  private positionBuffer: WebGLBuffer | null;
+  private positions: number[];
+  private tilemapTexture: WebGLTexture | null;
+
+  constructor(
+    gl: WebGL2RenderingContext,
+    tileset: WebGLTexture,
+    tilesetShape: [number, number],
+    tilesize: number,
+    map: Tile[][],
+    tint: [number, number, number, number] = [1, 1, 1, 1]
+  ) {
     this.gl = gl;
     this.tileset = tileset;
     this.tilesetWidth = tilesetShape[0];
@@ -44,7 +79,6 @@ export class TileMap {
     this.width = this.mapWidth * this.tilesize;
     this.height = this.mapHeight * this.tilesize;
     this.program = createProgram(gl, vertexSource, fragmentSource);
-    window.currentProgram = this.program;
     this.positionLocation = gl.getAttribLocation(this.program, "a_position");
     this.matrixLocation = gl.getUniformLocation(this.program, "u_matrix");
     this.texMatrixLocation = gl.getUniformLocation(this.program, "u_texMatrix");
@@ -71,7 +105,7 @@ export class TileMap {
     this.tilemapTexture = this.getTilemapTexture();
   }
 
-  getTilemapTexture() {
+  getTilemapTexture(): WebGLTexture | null {
     let gl = this.gl;
     let tm = new Uint32Array(this.width * this.height);
     let tilemapU8 = new Uint8Array(tm.buffer);
@@ -106,9 +140,8 @@ export class TileMap {
     return texture;
   }
 
-  render(time) {
+  render(scrollX?: number, scrollY?: number) {
     this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
-    time *= 0.001;
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
     this.gl.enableVertexAttribArray(this.positionLocation);
     this.gl.vertexAttribPointer(
@@ -132,8 +165,8 @@ export class TileMap {
     const dispScaleY = 1;
     const originX = this.gl.canvas.width * 0.5;
     const originY = this.gl.canvas.height * 0.5;
-    const scrollX = 0;
-    const scrollY = 0;
+    scrollX = scrollX || 0;
+    scrollY = scrollY || 0;
     const rotation = 0;
 
     let tmat = identity(dst);
@@ -146,13 +179,13 @@ export class TileMap {
       1,
       tmat
     );
-    // translate(
-    //   tmat,
-    //   -originX / this.gl.canvas.width,
-    //   -originY / this.gl.canvas.height,
-    //   0,
-    //   tmat
-    // );
+    translate(
+      tmat,
+      -originX / this.gl.canvas.width,
+      -originY / this.gl.canvas.height,
+      0,
+      tmat
+    );
     this.gl.uniformMatrix4fv(this.matrixLocation, false, mat);
     this.gl.uniformMatrix4fv(this.texMatrixLocation, false, tmat);
 

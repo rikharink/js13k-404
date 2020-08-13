@@ -1,6 +1,14 @@
-import { normalize, subtract, cross } from "./v3";
+export type m4 = Float32Array;
 
-export function orthographic(left, right, bottom, top, near, far, dst) {
+export function orthographic(
+  left: number,
+  right: number,
+  bottom: number,
+  top: number,
+  near: number,
+  far: number,
+  dst: Float32Array
+) {
   return copy16(
     2 / (right - left),
     0,
@@ -18,11 +26,17 @@ export function orthographic(left, right, bottom, top, near, far, dst) {
     (bottom + top) / (bottom - top),
     (near + far) / (near - far),
     1,
-    dst || new Float32Array(16)
+    dst
   );
 }
 
-export function perspective(fov, aspect, near, far, dst) {
+export function perspective(
+  fov: number,
+  aspect: number,
+  near: number,
+  far: number,
+  dst: Float32Array
+) {
   const f = Math.tan(Math.PI * 0.5 - 0.5 * fov);
   const rangeInv = 1.0 / (near - far);
   return copy16(
@@ -42,11 +56,16 @@ export function perspective(fov, aspect, near, far, dst) {
     0,
     near * far * rangeInv * 2,
     0,
-    dst || new Float32Array(16)
+    dst
   );
 }
 
-export function projection(width, height, depth, dst) {
+export function projection(
+  width: number,
+  height: number,
+  depth: number,
+  dst: Float32Array
+) {
   return copy16(
     2 / width,
     0,
@@ -64,231 +83,172 @@ export function projection(width, height, depth, dst) {
     1,
     0,
     1,
-    dst || new Float32Array(16)
+    dst
   );
 }
 
-export function multiply(a, b) {
-  a[0] =
+export function multiply(a: Float32Array, b: Float32Array, dst: Float32Array) {
+  dst[0] =
     b[0 * 4 + 0] * a[0 * 4 + 0] +
     b[0 * 4 + 1] * a[1 * 4 + 0] +
     b[0 * 4 + 2] * a[2 * 4 + 0] +
     b[0 * 4 + 3] * a[3 * 4 + 0];
-  a[1] =
+  dst[1] =
     b[0 * 4 + 0] * a[0 * 4 + 1] +
     b[0 * 4 + 1] * a[1 * 4 + 1] +
     b[0 * 4 + 2] * a[2 * 4 + 1] +
     b[0 * 4 + 3] * a[3 * 4 + 1];
-  a[2] =
+  dst[2] =
     b[0 * 4 + 0] * a[0 * 4 + 2] +
     b[0 * 4 + 1] * a[1 * 4 + 2] +
     b[0 * 4 + 2] * a[2 * 4 + 2] +
     b[0 * 4 + 3] * a[3 * 4 + 2];
-  a[3] =
+  dst[3] =
     b[0 * 4 + 0] * a[0 * 4 + 3] +
     b[0 * 4 + 1] * a[1 * 4 + 2] +
     b[0 * 4 + 2] * a[2 * 4 + 3] +
     b[0 * 4 + 3] * a[3 * 4 + 3];
-  a[4] =
+  dst[4] =
     b[1 * 4 + 0] * a[0 * 4 + 0] +
     b[1 * 4 + 1] * a[1 * 4 + 0] +
     b[1 * 4 + 2] * a[2 * 4 + 0] +
     b[1 * 4 + 3] * a[3 * 4 + 0];
-  a[5] =
+  dst[5] =
     b[1 * 4 + 0] * a[0 * 4 + 1] +
     b[1 * 4 + 1] * a[1 * 4 + 1] +
     b[1 * 4 + 2] * a[2 * 4 + 1] +
     b[1 * 4 + 3] * a[3 * 4 + 1];
-  a[6] =
+  dst[6] =
     b[1 * 4 + 0] * a[0 * 4 + 2] +
     b[1 * 4 + 1] * a[1 * 4 + 2] +
     b[1 * 4 + 2] * a[2 * 4 + 2] +
     b[1 * 4 + 3] * a[3 * 4 + 2];
-  a[7] =
+  dst[7] =
     b[1 * 4 + 0] * a[0 * 4 + 3] +
     b[1 * 4 + 1] * a[1 * 4 + 2] +
     b[1 * 4 + 2] * a[2 * 4 + 3] +
     b[1 * 4 + 3] * a[3 * 4 + 3];
-  a[8] =
+  dst[8] =
     b[2 * 4 + 0] * a[0 * 4 + 0] +
     b[2 * 4 + 1] * a[1 * 4 + 0] +
     b[2 * 4 + 2] * a[2 * 4 + 0] +
     b[2 * 4 + 3] * a[3 * 4 + 0];
-  a[9] =
+  dst[9] =
     b[2 * 4 + 0] * a[0 * 4 + 1] +
     b[2 * 4 + 1] * a[1 * 4 + 1] +
     b[2 * 4 + 2] * a[2 * 4 + 1] +
     b[2 * 4 + 3] * a[3 * 4 + 1];
-  a[10] =
+  dst[10] =
     b[2 * 4 + 0] * a[0 * 4 + 2] +
     b[2 * 4 + 1] * a[1 * 4 + 2] +
     b[2 * 4 + 2] * a[2 * 4 + 2] +
     b[2 * 4 + 3] * a[3 * 4 + 2];
-  a[11] =
+  dst[11] =
     b[2 * 4 + 0] * a[0 * 4 + 3] +
     b[2 * 4 + 1] * a[1 * 4 + 2] +
     b[2 * 4 + 2] * a[2 * 4 + 3] +
     b[2 * 4 + 3] * a[3 * 4 + 3];
-  a[12] =
+  dst[12] =
     b[3 * 4 + 0] * a[0 * 4 + 0] +
     b[3 * 4 + 1] * a[1 * 4 + 0] +
     b[3 * 4 + 2] * a[2 * 4 + 0] +
     b[3 * 4 + 3] * a[3 * 4 + 0];
-  a[13] =
+  dst[13] =
     b[3 * 4 + 0] * a[0 * 4 + 1] +
     b[3 * 4 + 1] * a[1 * 4 + 1] +
     b[3 * 4 + 2] * a[2 * 4 + 1] +
     b[3 * 4 + 3] * a[3 * 4 + 1];
-  a[14] =
+  dst[14] =
     b[3 * 4 + 0] * a[0 * 4 + 2] +
     b[3 * 4 + 1] * a[1 * 4 + 2] +
     b[3 * 4 + 2] * a[2 * 4 + 2] +
     b[3 * 4 + 3] * a[3 * 4 + 2];
-  a[15] =
+  dst[15] =
     b[3 * 4 + 0] * a[0 * 4 + 3] +
     b[3 * 4 + 1] * a[1 * 4 + 2] +
     b[3 * 4 + 2] * a[2 * 4 + 3] +
     b[3 * 4 + 3] * a[3 * 4 + 3];
-  return a;
+  return dst;
 }
 
-export function translation(tx, ty, tz, dst) {
-  return copy16(
-    1,
-    0,
-    0,
-    0,
-    0,
-    1,
-    0,
-    0,
-    0,
-    0,
-    1,
-    0,
-    tx,
-    ty,
-    tz,
-    1,
-    dst || new Float32Array(16)
-  );
+export function translation(
+  tx: number,
+  ty: number,
+  tz: number,
+  dst: Float32Array
+) {
+  return copy16(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, tx, ty, tz, 1, dst);
 }
 
-export function xRotation(angleInRadians, dst) {
+export function xRotation(angleInRadians: number, dst: Float32Array) {
   const c = Math.cos(angleInRadians);
   const s = Math.sin(angleInRadians);
-  return copy16(
-    1,
-    0,
-    0,
-    0,
-    0,
-    c,
-    s,
-    0,
-    0,
-    -s,
-    c,
-    0,
-    0,
-    0,
-    0,
-    1,
-    dst || new Float32Array(16)
-  );
+  return copy16(1, 0, 0, 0, 0, c, s, 0, 0, -s, c, 0, 0, 0, 0, 1, dst);
 }
 
-export function yRotation(angleInRadians, dst) {
+export function yRotation(angleInRadians: number, dst: Float32Array) {
   const c = Math.cos(angleInRadians);
   const s = Math.sin(angleInRadians);
-  return copy16(
-    c,
-    0,
-    -s,
-    0,
-    0,
-    1,
-    0,
-    0,
-    s,
-    0,
-    c,
-    0,
-    0,
-    0,
-    0,
-    1,
-    dst || new Float32Array(16)
-  );
+  return copy16(c, 0, -s, 0, 0, 1, 0, 0, s, 0, c, 0, 0, 0, 0, 1, dst);
 }
 
-export function zRotation(angleInRadians, dst) {
+export function zRotation(angleInRadians: number, dst: Float32Array) {
   const c = Math.cos(angleInRadians);
   const s = Math.sin(angleInRadians);
-  return copy16(
-    c,
-    s,
-    0,
-    0,
-    -s,
-    c,
-    0,
-    0,
-    0,
-    0,
-    1,
-    0,
-    0,
-    0,
-    0,
-    1,
-    dst || new Float32Array(16)
-  );
+  return copy16(c, s, 0, 0, -s, c, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, dst);
 }
 
-export function scaling(sx, sy, sz, dst) {
-  return copy16(
-    sx,
-    0,
-    0,
-    0,
-    0,
-    sy,
-    0,
-    0,
-    0,
-    0,
-    sz,
-    0,
-    0,
-    0,
-    0,
-    1,
-    dst || new Float32Array(16)
-  );
+export function scaling(sx: number, sy: number, sz: number, dst: Float32Array) {
+  return copy16(sx, 0, 0, 0, 0, sy, 0, 0, 0, 0, sz, 0, 0, 0, 0, 1, dst);
 }
+
 const temp = new Float32Array(16);
-export function translate(m, tx, ty, tz, dst) {
+
+export function translate(
+  m: Float32Array,
+  tx: number,
+  ty: number,
+  tz: number,
+  dst: Float32Array
+) {
   return multiply(m, translation(tx, ty, tz, temp), dst);
 }
 
-export function xRotate(m, angleInRadians, dst) {
+export function xRotate(
+  m: Float32Array,
+  angleInRadians: number,
+  dst: Float32Array
+) {
   return multiply(m, xRotation(angleInRadians, temp), dst);
 }
 
-export function yRotate(m, angleInRadians, dst) {
+export function yRotate(
+  m: Float32Array,
+  angleInRadians: number,
+  dst: Float32Array
+) {
   return multiply(m, yRotation(angleInRadians, temp), dst);
 }
 
-export function zRotate(m, angleInRadians, dst) {
+export function zRotate(
+  m: Float32Array,
+  angleInRadians: number,
+  dst: Float32Array
+) {
   return multiply(m, zRotation(angleInRadians, temp), dst);
 }
 
-export function scale(m, sx, sy, sz, dst) {
+export function scale(
+  m: Float32Array,
+  sx: number,
+  sy: number,
+  sz: number,
+  dst: Float32Array
+) {
   return multiply(m, scaling(sx, sy, sz, temp), dst);
 }
 
-export function inverse(m, dst) {
+export function inverse(m: Float32Array, dst: Float32Array) {
   const m00 = m[0 * 4 + 0];
   const m01 = m[0 * 4 + 1];
   const m02 = m[0 * 4 + 2];
@@ -422,46 +382,7 @@ export function inverse(m, dst) {
   );
 }
 
-export function transformVector(m, v) {
-  for (let i = 0; i < 4; ++i) {
-    m[i] = 0.0;
-    for (let j = 0; j < 4; ++j) {
-      m[i] += v[j] * m[j * 4 + i];
-    }
-  }
-  return m;
-}
-
-const tempVecA = [0, 0, 0];
-const tempVecB = [0, 0, 0];
-const tempVecC = [0, 0, 0];
-export function lookAt(cameraPosition, target, up, dst) {
-  const zAxis = normalize(subtract(cameraPosition, target, tempVecA), tempVecA);
-  const xAxis = normalize(cross(up, zAxis, tempVecB), tempVecB);
-  const yAxis = normalize(cross(zAxis, xAxis, tempVecC), tempVecC);
-
-  return copy16(
-    xAxis[0],
-    xAxis[1],
-    xAxis[2],
-    0,
-    yAxis[0],
-    yAxis[1],
-    yAxis[2],
-    0,
-    zAxis[0],
-    zAxis[1],
-    zAxis[2],
-    0,
-    cameraPosition[0],
-    cameraPosition[1],
-    cameraPosition[2],
-    1,
-    dst || new Float32Array(16)
-  );
-}
-
-export function transpose(m, dst) {
+export function transpose(m: Float32Array, dst: Float32Array) {
   return copy16(
     m[0],
     m[4],
@@ -479,11 +400,11 @@ export function transpose(m, dst) {
     m[7],
     m[11],
     m[15],
-    dst || new Float32Array(16)
+    dst
   );
 }
 
-export function identity(dst) {
+export function identity(dst: Float32Array) {
   return copy16(
     1,
     0,
@@ -501,11 +422,11 @@ export function identity(dst) {
     0,
     0,
     1,
-    dst || new Float32Array(16)
+    dst
   );
 }
 
-function copy16(a, b, c, d, e, f, g, h, j, i, k, l, m, n, o, p, dst) {
+function copy16(a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, j: number, i: number, k: number, l: number, m: number, n: number, o: number, p: number, dst: Float32Array) {
   dst[0] = a;
   dst[1] = b;
   dst[2] = c;

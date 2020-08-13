@@ -1,4 +1,5 @@
 import { terser } from "rollup-plugin-terser";
+import typescript from '@rollup/plugin-typescript';
 import livereload from 'rollup-plugin-livereload'
 import dev from "rollup-plugin-dev";
 import postcss from "rollup-plugin-postcss";
@@ -7,7 +8,7 @@ import glslify from "rollup-plugin-glslify";
 import inline, { defaultTemplate } from "./plugins/rollup-plugin-html-inline";
 import packageOutput from "./plugins/rollup-plugin-package-js13k";
 export default {
-  input: "src/main.js",
+  input: "src/main.ts",
   output: [
     {
       name: "prod",
@@ -29,22 +30,20 @@ export default {
       path: "./",
       plugins: [],
     }),
-    // terser({
-    //   compress: {
-    //     passes: 4,
-    //     unsafe: true,
-    //     unsafe_arrows: true,
-    //     unsafe_comps: true,
-    //     unsafe_math: true,
-    //   },
-    //   ecma: 8,
-    //   mangle: true,
-    //   module: {
-    //     properties: {
-    //       reserved: [],
-    //     },
-    //   },
-    // }),
+    typescript(),
+    terser({
+      compress: {
+        passes: 4,
+        unsafe: true,
+        unsafe_arrows: true,
+        unsafe_comps: true,
+        unsafe_math: true,
+      },
+      ecma: 8,
+      mangle: {
+        properties: false,
+      },
+    }),
     inline({
       title: "js13k-template",
       canvasId: "game",
