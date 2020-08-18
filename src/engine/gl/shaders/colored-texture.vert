@@ -1,12 +1,10 @@
-#version 300 es
-
-in vec4 a_position;
-in vec2 a_texcoord;
+attribute vec4 a_position;
+attribute vec2 a_texcoord;
 
 uniform mat4 u_matrix;
 uniform mat4 u_textureMatrix;
 
-out vec2 v_texcoord;
+varying vec2 v_texcoord;
 
 void main(){
     gl_Position=u_matrix*a_position;

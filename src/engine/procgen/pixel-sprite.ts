@@ -82,7 +82,7 @@ export class Sprite {
   mask: Mask;
   data: MaskData[];
   options: SpriteOptions;
-  canvas!: HTMLCanvasElement;
+  public canvas!: HTMLCanvasElement;
   ctx!: CanvasRenderingContext2D;
   pixels: any;
 

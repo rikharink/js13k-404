@@ -1,9 +1,56 @@
+import { IRenderable } from "./renderable";
 import vertexSource from "./gl/shaders/tilemap.vert";
 import fragmentSource from "./gl/shaders/tilemap.frag";
-import { createProgram } from "./gl/util";
+import {
+  createProgram,
+  Context,
+  bindVertexArray,
+  createVertexArray,
+  Vao,
+} from "./gl/util";
 import { orthographic, scale, identity, translate, zRotate } from "./math/m4";
 
 const dst = new Float32Array(16);
+
+export function getTileData(
+  size: number,
+  color: [number, number, number, number]
+): Uint8Array {
+  let length = size * size * 4;
+  let textureData = new Uint8Array(length);
+
+  for (let i = 0; i < length; i += 4) {
+    textureData[i] = color[0];
+    textureData[i + 1] = color[1];
+    textureData[i + 2] = color[2];
+    textureData[i + 3] = color[3];
+  }
+  return textureData;
+}
+
+export function getTileAtlas(
+  tilesize: number,
+  tiles: Uint8Array[]
+): Uint8Array {
+  let size = tilesize * tilesize * tiles.length * 4;
+  let width = tilesize * tiles.length;
+  let tileatlas = new Uint8Array(size);
+  for (let i = 0; i < size; i += 4) {
+    const offset = i / 4;
+    const column = offset % width;
+    const row = (offset / width) | 0;
+    const tileIndex = (column / tilesize) | 0;
+    const tile = tiles[tileIndex];
+    const tileColumn = column % tilesize;
+    const tilePixel = (tileColumn + row * tilesize) * 4;
+    tileatlas[i] = tile[tilePixel];
+    tileatlas[i + 1] = tile[tilePixel + 1];
+    tileatlas[i + 2] = tile[tilePixel + 2];
+    tileatlas[i + 3] = tile[tilePixel + 3];
+  }
+
+  return tileatlas;
+}
 
 export class Tile {
   public u: number;
@@ -32,15 +79,16 @@ export class Tile {
   }
 }
 
-export class TileMap {
-  private gl: WebGL2RenderingContext;
+export class TileMap implements IRenderable {
+  gl: Context;
+  resolutionLocation: WebGLUniformLocation | null;
   private tileset: WebGLTexture;
   private tilesetWidth: number;
   private tilesetHeight: number;
   private tilesize: number;
   private map: Tile[][];
   private tint: [number, number, number, number];
-  public  mapWidth: number;
+  public mapWidth: number;
   public mapHeight: number;
   public width: number;
   public height: number;
@@ -53,13 +101,14 @@ export class TileMap {
   private tilemapSizeLocation: WebGLUniformLocation | null;
   private tilesetSizeLocation: WebGLUniformLocation | null;
   private tintLocation: WebGLUniformLocation | null;
-  private vao: WebGLVertexArrayObject | null;
+
+  private vao: Vao | null;
   private positionBuffer: WebGLBuffer | null;
   private positions: number[];
   private tilemapTexture: WebGLTexture | null;
 
   constructor(
-    gl: WebGL2RenderingContext,
+    gl: Context,
     tileset: WebGLTexture,
     tilesetShape: [number, number],
     tilesize: number,
@@ -93,7 +142,11 @@ export class TileMap {
       "u_tilesetSize"
     );
     this.tintLocation = gl.getUniformLocation(this.program, "u_tint");
-    this.vao = this.gl.createVertexArray();
+    this.resolutionLocation = gl.getUniformLocation(
+      this.program,
+      "u_resolution"
+    );
+    this.vao = createVertexArray(this.gl);
     this.positionBuffer = this.gl.createBuffer();
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
     this.positions = [0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1];
@@ -140,7 +193,10 @@ export class TileMap {
     return texture;
   }
 
-  render(scrollX?: number, scrollY?: number) {
+  render(
+    scrollX?: number,
+    scrollY?: number
+  ) {
     this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
     this.gl.enableVertexAttribArray(this.positionLocation);
@@ -154,7 +210,7 @@ export class TileMap {
     );
 
     this.gl.useProgram(this.program);
-    this.gl.bindVertexArray(this.vao);
+    bindVertexArray(this.gl, this.vao!);
     let mat = new Float32Array(16);
     orthographic(0, this.gl.canvas.width, this.gl.canvas.height, 0, -1, 1, mat);
     scale(mat, this.gl.canvas.width, this.gl.canvas.height, 1, mat);
@@ -215,7 +271,6 @@ export class TileMap {
       this.tint[2],
       this.tint[3]
     );
-
     this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
   }
 }

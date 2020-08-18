@@ -1,5 +1,6 @@
 const DEBUG_MODE = true;
 import { updateDebugInfo } from "./debug/index";
+import { Context } from "./gl/util";
 
 let then = 0;
 
@@ -81,11 +82,11 @@ export function resizeCanvasToDisplaySize(
   return false;
 }
 
-export function randColor() {
+export function randomColor() {
   return [Math.random(), Math.random(), Math.random(), 1];
 }
 
-export function setupCanvas(gl: WebGL2RenderingContext, now: number) {
+export function setupCanvas(gl: Context, now: number) {
   now *= 0.001;
   const deltaTime = now - then;
   then = now;

@@ -1,9 +1,10 @@
+import { Context, createVertexArray, Vao, bindVertexArray } from './gl/util';
 import { orthographic, translate, scale, translation } from "./math/m4";
 
 const dst = new Float32Array(16);
 
 export class GameSprite {
-  private gl: WebGL2RenderingContext;
+  private gl: Context;
   private width: number;
   private height: number;
   private frames: number;
@@ -25,7 +26,7 @@ export class GameSprite {
   private textureLocation!: WebGLUniformLocation;
   private colorLocation!: WebGLUniformLocation;
   private textureMatrixLocation!: WebGLUniformLocation;
-  private vao!: WebGLVertexArrayObject;
+  private vao!: Vao;
   private positionBuffer!: WebGLBuffer;
   private positions!: number[];
   private texcoordBuffer!: WebGLBuffer;
@@ -33,7 +34,7 @@ export class GameSprite {
   private texMatrix = new Float32Array(16);
 
   constructor(
-    gl: WebGL2RenderingContext,
+    gl: Context,
     shader: WebGLProgram,
     img: TexImageSource,
     position: [number, number],
@@ -103,7 +104,7 @@ export class GameSprite {
       this.program,
       "u_textureMatrix"
     )!;
-    this.vao = this.gl.createVertexArray()!;
+    this.vao = createVertexArray(this.gl)!;
     this.positionBuffer = this.gl.createBuffer()!;
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
     this.positions = [0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1];
@@ -147,7 +148,7 @@ export class GameSprite {
     const texWidth = this.width * this.frames;
     const texHeight = this.height;
     this.gl.useProgram(this.program);
-    this.gl.bindVertexArray(this.vao);
+    bindVertexArray(this.gl, this.vao);
     const textureUnit = 0;
     this.gl.uniform1i(this.textureLocation, textureUnit);
     this.gl.activeTexture(this.gl.TEXTURE0 + textureUnit);

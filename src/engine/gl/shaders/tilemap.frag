@@ -1,7 +1,6 @@
-#version 300 es
 precision highp float;
 
-in vec2 v_texcoord;
+varying vec2 v_texcoord;
 
 uniform sampler2D u_tilemap;
 uniform sampler2D u_tiles;
@@ -9,13 +8,12 @@ uniform vec2 u_tilemapSize;
 uniform vec2 u_tilesetSize;
 uniform vec4 u_tint;
 
-out vec4 outColor;
 
 void main(){
     vec2 tilemapCoord=floor(v_texcoord);
     vec2 texcoord=fract(v_texcoord);
     vec2 tileFoo=fract((tilemapCoord+vec2(.5,.5))/u_tilemapSize);
-    vec4 tile=floor(texture(u_tilemap,tileFoo)*256.);
+    vec4 tile=floor(texture2D(u_tilemap,tileFoo)*256.);
     
     float flags=tile.w;
     float xflip=step(128.,flags);
@@ -33,9 +31,9 @@ void main(){
         texcoord=texcoord.yx;
     }
     vec2 tileCoord=(tile.xy+texcoord)/u_tilesetSize;
-    vec4 color=texture(u_tiles,tileCoord);
+    vec4 color=texture2D(u_tiles,tileCoord);
     if(color.a<=.1){
         discard;
     }
-    outColor=color*u_tint;
+    gl_FragColor=color*u_tint;
 }

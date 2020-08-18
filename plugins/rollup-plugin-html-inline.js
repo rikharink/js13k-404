@@ -1,16 +1,18 @@
 var minify = require("html-minifier").minify;
 
-export const defaultTemplate = (options, script, style) =>
+export const defaultTemplate = (options, script, sourcemap, style) =>
   `<title>${options.title}</title>
 <style>${style}</style>
 <canvas id="${options.canvasId}"></canvas>
-<script>${script}</script>`;
+<script>${script.trim()}//# sourceMappingURL=${sourcemap}</script>`;
 
 export default function inline(
   options = {
     title: "js13k-template",
     canvasId: "game",
     template: undefined,
+    sourcemap: undefined,
+    delete: false,
   }
 ) {
   return {
@@ -20,21 +22,22 @@ export default function inline(
       const renderTemplate = options.template || defaultTemplate;
       const scripts = [];
       const styles = [];
-      
+
       Object.keys(bundle).forEach((o) => {
         const entry = bundle[o];
         if (entry.fileName.endsWith("js")) {
           scripts.push(entry.type == "chunk" ? entry.code : entry.source);
-        }
-        if (entry.fileName.endsWith("css")) {
+        } else if (entry.fileName.endsWith("css")) {
           styles.push(entry.type == "chunk" ? entry.code : entry.source);
         }
-        delete bundle[o];
+        if (options.delete) {
+          delete bundle[o];
+        }
       });
-      const output = {
-        fileName: "index.html",
-        name: "index",
-        source: minify(renderTemplate(options, scripts.join(), styles.join()), {
+
+      let source = minify(
+        renderTemplate(options, scripts.join(), options.sourcemap, styles.join()),
+        {
           collapseWhitespace: true,
           collapseBooleanAttributes: true,
           removeAttributeQuotes: true,
@@ -43,7 +46,13 @@ export default function inline(
           removeOptionalTags: true,
           removeRedundantAttributes: true,
           html5: true,
-        }),
+        }
+      );
+
+      const output = {
+        fileName: "index.html",
+        name: "index",
+        source: source,
         type: "asset",
       };
       this.emitFile(output);

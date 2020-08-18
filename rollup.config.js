@@ -14,7 +14,7 @@ export default {
       name: "prod",
       dir: "dist",
       format: "es",
-      sourcemap: "inline",
+      sourcemap: true,
       strict: false,
       plugins: [],
     },
@@ -48,10 +48,12 @@ export default {
       title: "js13k-template",
       canvasId: "game",
       template: defaultTemplate,
+      sourcemap: "main.js.map"
     }),
     packageOutput({
       name: "js13k-template",
       directory: "dist",
+      include: ["index.html"]
     }),
     dev({
       dirs: ["dist"],

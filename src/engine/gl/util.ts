@@ -2,8 +2,40 @@ import { orthographic, translate, scale, translation } from "../math/m4";
 
 const dst = new Float32Array(16);
 
+export type Context = WebGLRenderingContext | WebGL2RenderingContext;
+export type Vao = WebGLVertexArrayObject | WebGLVertexArrayObjectOES;
+
+export function getContext(canvas: HTMLCanvasElement): Context {
+  let gl = canvas.getContext("webgl2");
+  if (gl) {
+    return gl;
+  } else {
+    return canvas.getContext("webgl")!;
+  }
+}
+
+export function createVertexArray(gl: Context): Vao | null {
+  if (gl instanceof WebGLRenderingContext) {
+    const oes = gl.getExtension("OES_vertex_array_object");
+    return oes?.createVertexArrayOES()!;
+  } else {
+    return gl.createVertexArray();
+  }
+}
+
+export function bindVertexArray(gl: Context, vao: Vao) {
+  if (gl instanceof WebGLRenderingContext) {
+    const oes = gl.getExtension("OES_vertex_array_object");
+    if (oes) {
+      oes.bindVertexArrayOES(vao);
+    }
+  } else if (gl instanceof WebGL2RenderingContext) {
+    gl.bindVertexArray(vao);
+  }
+}
+
 export function drawImage(
-  gl: WebGL2RenderingContext,
+  gl: Context,
   program: WebGLProgram,
   vao: WebGLVertexArrayObject,
   textureLocation: WebGLUniformLocation,
@@ -49,7 +81,7 @@ export function drawImage(
     tint = [1, 1, 1, 1];
   }
   gl.useProgram(program);
-  gl.bindVertexArray(vao);
+  bindVertexArray(gl, vao);
   const textureUnit = 0;
   gl.uniform1i(textureLocation, textureUnit);
   gl.activeTexture(gl.TEXTURE0 + textureUnit);
@@ -76,7 +108,7 @@ export function drawImage(
 }
 
 export function createShader(
-  gl: WebGL2RenderingContext,
+  gl: Context,
   type: number,
   source: string
 ): WebGLShader {
@@ -94,7 +126,7 @@ export function createShader(
 }
 
 export function createProgram(
-  gl: WebGL2RenderingContext,
+  gl: Context,
   sourceVertex: string,
   sourceFragment: string
 ): WebGLProgram {
@@ -112,4 +144,28 @@ export function createProgram(
   console.error(gl.getProgramInfoLog(program!));
   gl.deleteProgram(program);
   throw Error("couldn't create program");
+}
+
+export function setFramebuffer(
+  gl: Context,
+  resolutionLocation: WebGLUniformLocation | null,
+  fbo: WebGLFramebuffer | null,
+  width: number,
+  height: number
+) {
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+  if (resolutionLocation) {
+    gl.uniform2f(resolutionLocation, width, height);
+  }
+  gl.viewport(0, 0, width, height);
+}
+
+export function createAndSetupTexture(gl: Context) {
+  var texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  return texture!;
 }
