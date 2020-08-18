@@ -23,5 +23,6 @@ export function updateDebugInfo(deltaTime: number, gl: Context) {
 
   debug.innerText = `${fpsText}
   context = ${gl instanceof WebGLRenderingContext ? "webgl" : gl instanceof WebGL2RenderingContext ? "webgl2" : "?"}
+  extension = ${!!gl.getExtension("OES_vertex_array_object")}
   `;
 }
