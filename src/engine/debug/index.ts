@@ -1,9 +1,11 @@
+import { Context } from './../gl/util';
 let debug: HTMLDivElement | undefined;
 let avgFPS = 60;
 let alpha = 0.9;
 let dt = 0;
+let fpsText = "";
 
-export function updateDebugInfo(deltaTime: number) {
+export function updateDebugInfo(deltaTime: number, gl: Context) {
   if (!debug) {
     debug = document.createElement("div");
     debug.id = "debug";
@@ -16,6 +18,10 @@ export function updateDebugInfo(deltaTime: number) {
   avgFPS = alpha * avgFPS + (1.0 - alpha) * (1 / deltaTime);
   if (dt > 1) {
     dt = 0;
-    debug.innerText = `${avgFPS.toFixed(1)} fps`;
+    fpsText = `${avgFPS.toFixed(1)} fps`;
   }
+
+  debug.innerText = `${fpsText}
+  context = ${gl instanceof WebGLRenderingContext ? "webgl" : gl instanceof WebGL2RenderingContext ? "webgl2" : "?"}
+  `;
 }

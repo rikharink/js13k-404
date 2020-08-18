@@ -91,7 +91,7 @@ export function setupCanvas(gl: Context, now: number) {
   const deltaTime = now - then;
   then = now;
   if (DEBUG_MODE) {
-    updateDebugInfo(deltaTime);
+    updateDebugInfo(deltaTime, gl);
   }
   if (resizeCanvasToDisplaySize(gl.canvas as HTMLCanvasElement)) {
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
