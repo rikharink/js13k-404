@@ -7,11 +7,11 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "start": "run-s clean watch",
+    "start": "cross-env NODE_ENV=development run-s clean watch",
     "watch": "rollup --config rollup.config.js --watch",
     "clean": "rimraf dist",
     "build": "rollup --config rollup.config.js",
-    "dist": "run-s clean build"
+    "dist": "cross-env NODE_ENV=production run-s clean build"
   },
   "devDependencies": {
     "@open-wc/rollup-plugin-html": "^1.1.0",
@@ -19,6 +19,7 @@
     "@rollup/plugin-typescript": "^5.0.2",
     "advzip-bin": "^2.0.0",
     "archiver": "^5.0.0",
+    "cross-env": "^7.0.2",
     "filesize": "^6.1.0",
     "html-minifier": "^4.0.0",
     "node-notifier": "^7.0.2",

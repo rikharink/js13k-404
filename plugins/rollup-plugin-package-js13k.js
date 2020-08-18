@@ -23,6 +23,7 @@ export default function packageJs13k(
   options = {
     name: "",
     directory: "",
+    notify: false,
     include: undefined,
     exclude: undefined,
   }
@@ -44,7 +45,9 @@ export default function packageJs13k(
               if (err) {
                 reject(err);
               } else {
-                notifyFilesize("Archive Size", outputPath);
+                if (options.notify) {
+                  notifyFilesize("Archive Size", outputPath);
+                }
                 console.log("done");
                 resolve();
               }
@@ -55,8 +58,10 @@ export default function packageJs13k(
 
         Object.keys(bundle).forEach((k) => {
           const entry = bundle[k];
-          const include = !options.include || options.include.includes(entry.fileName);
-          const exclude = !options.exclude || !options.include.includes(entry.fileName);
+          const include =
+            !options.include || options.include.includes(entry.fileName);
+          const exclude =
+            !options.exclude || !options.include.includes(entry.fileName);
           const process = include && exclude;
           if (process) {
             if (entry.type === "asset") {

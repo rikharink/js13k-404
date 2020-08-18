@@ -1,12 +1,15 @@
 import { terser } from "rollup-plugin-terser";
-import typescript from '@rollup/plugin-typescript';
-import livereload from 'rollup-plugin-livereload'
+import typescript from "@rollup/plugin-typescript";
+import livereload from "rollup-plugin-livereload";
 import dev from "rollup-plugin-dev";
 import postcss from "rollup-plugin-postcss";
 import image from "@rollup/plugin-image";
 import glslify from "rollup-plugin-glslify";
 import inline, { defaultTemplate } from "./plugins/rollup-plugin-html-inline";
 import packageOutput from "./plugins/rollup-plugin-package-js13k";
+
+const env = process.env.NODE_ENV || "development";
+
 export default {
   input: "src/main.ts",
   output: [
@@ -48,18 +51,19 @@ export default {
       title: "js13k-template",
       canvasId: "game",
       template: defaultTemplate,
-      sourcemap: "main.js.map"
+      sourcemap: "main.js.map",
     }),
     packageOutput({
       name: "js13k-template",
       directory: "dist",
-      include: ["index.html"]
+      include: ["index.html"],
+      notify: env === "development",
     }),
     dev({
       dirs: ["dist"],
     }),
     livereload({
-      watch: "dist"
-    })
+      watch: "dist",
+    }),
   ],
 };
