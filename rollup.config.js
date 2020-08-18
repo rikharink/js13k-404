@@ -36,7 +36,7 @@ let plugins = [
     },
   }),
   inline({
-    title: "js13k-template",
+    title: "404: this world does not exist",
     canvasId: "game",
     template: defaultTemplate,
     sourcemap: "main.js.map",
