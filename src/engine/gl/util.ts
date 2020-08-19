@@ -23,7 +23,7 @@ export function createVertexArray(gl: Context): Vao | null {
   }
 }
 
-export function bindVertexArray(gl: Context, vao: Vao) {
+export function bindVertexArray(gl: Context, vao: Vao | null) {
   if (gl instanceof WebGLRenderingContext) {
     const oes = gl.getExtension("OES_vertex_array_object");
     if (oes) {

@@ -1,5 +1,5 @@
 import "./style/main.css";
-import { Background } from './background';
+import { StarField } from './star-field';
 import { Scene } from './engine/scene';
 import { setupCanvas } from "./engine/util";
 import { TileMap, Tile, getTileData, getTileAtlas } from "./engine/tile-map";
@@ -142,8 +142,8 @@ function getTileMap(gl: Context){
   return new TileMap(gl, texture, shape, tilesize, tm);
 }
 
-function getBackground(gl: Context): Background{
-  return new Background(gl, gl.canvas.width, gl.canvas.height);
+function getBackground(gl: Context): StarField{
+  return new StarField(gl, gl.canvas.width, gl.canvas.height);
 }
 
 function main() {
