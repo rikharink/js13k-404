@@ -1,4 +1,11 @@
-import { Context } from './../gl/util';
+import { Context } from "./../gl/util";
+
+declare global {
+  interface Window {
+    Dump: any;
+  }
+}
+
 let debug: HTMLDivElement | undefined;
 let avgFPS = 60;
 let alpha = 0.9;
@@ -16,7 +23,7 @@ export function updateDebugInfo(deltaTime: number, gl: Context) {
     debug.style.border = "2px solid black";
     debug.style.borderRadius = "4px";
     debug.style.padding = "16px 16px";
-    
+
     document.body.appendChild(debug);
   }
   dt += deltaTime;
@@ -28,11 +35,22 @@ export function updateDebugInfo(deltaTime: number, gl: Context) {
   debug.innerText = `${fpsText}`;
 }
 
-export function createImageFromTexture(gl: Context, texture: WebGLTexture, width: number, height: number): HTMLImageElement {
+export function createImageFromTexture(
+  gl: Context,
+  texture: WebGLTexture,
+  width: number,
+  height: number
+): HTMLImageElement {
   // Create a framebuffer backed by the texture
   let framebuffer = gl.createFramebuffer();
   gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+  gl.framebufferTexture2D(
+    gl.FRAMEBUFFER,
+    gl.COLOR_ATTACHMENT0,
+    gl.TEXTURE_2D,
+    texture,
+    0
+  );
 
   // Read the contents of the framebuffer
   let data = new Uint8Array(width * height * 4);
@@ -40,11 +58,11 @@ export function createImageFromTexture(gl: Context, texture: WebGLTexture, width
 
   gl.deleteFramebuffer(framebuffer);
 
-  // Create a 2D canvas to store the result 
-  let canvas = document.createElement('canvas');
+  // Create a 2D canvas to store the result
+  let canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
-  let context = canvas.getContext('2d')!;
+  let context = canvas.getContext("2d")!;
 
   // Copy the pixels to a 2D canvas
   let imageData = context.createImageData(width, height);
