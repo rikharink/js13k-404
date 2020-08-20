@@ -10,8 +10,10 @@ export class PointstarRenderer {
   height: number;
   texture: WebGLTexture;
   private _textureRenderer: TextureRenderer;
+  private _rng: () => number;
 
-  constructor(gl: Context, shaders: ShaderStore) {
+  constructor(gl: Context, shaders: ShaderStore, rng: () => number) {
+    this._rng = rng;
     this.width = gl.canvas.width;
     this.height = gl.canvas.height;
     this._textureRenderer = new TextureRenderer(gl, shaders);
@@ -46,8 +48,7 @@ export class PointstarRenderer {
         gl.canvas.width,
         gl.canvas.height,
         0.05,
-        0.125,
-        Math.random
+        0.125
       ),
     });
   }
@@ -56,14 +57,13 @@ export class PointstarRenderer {
     width: number,
     height: number,
     density: number,
-    brightness: number,
-    rng: () => number
+    brightness: number
   ): Uint8Array {
     let count = Math.round(width * height * density);
     let data = new Uint8Array(width * height * 3);
     for (let i = 0; i < count; i++) {
-      const r = Math.floor(rng() * width * height);
-      const c = Math.round(255 * Math.log(1 - rng()) * -brightness);
+      const r = Math.floor(this._rng() * width * height);
+      const c = Math.round(255 * Math.log(1 - this._rng()) * -brightness);
       data[r * 3 + 0] = c;
       data[r * 3 + 1] = c;
       data[r * 3 + 2] = c;

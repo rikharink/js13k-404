@@ -11,19 +11,25 @@ import { Context } from "./engine/gl/util";
 import { Starfield } from "./starfield";
 import { setupCanvas } from "./engine/util";
 import { ShaderStore } from "./engine/gl/shaders/shaders";
-import { TextureRenderer } from "./engine/gl/renderers/texture-renderer";
-import { PointstarRenderer } from "./engine/gl/renderers/pointstar-renderer";
+import { Random } from "./engine/random";
 
 export class Game {
   private currentScene?: Scene;
   private gl: WebGLRenderingContext;
   private shaderStore: ShaderStore = new ShaderStore();
+  private random: Random = new Random("404");
 
   constructor(gl: Context) {
     this.setupShaders(gl);
     this.gl = gl;
-    this.currentScene = new Scene(gl, this.shaderStore);
-    this.currentScene.background = new Starfield(gl, this.shaderStore, 2, 20);
+    this.currentScene = new Scene(gl, this.shaderStore, this.random.random);
+    this.currentScene.background = new Starfield(
+      gl,
+      this.shaderStore,
+      2,
+      20,
+      this.random.random
+    );
   }
 
   private setupShaders(gl: Context) {

@@ -36,7 +36,7 @@ export class NebulaeRenderer {
   private _noiseLocation: WebGLUniformLocation | null;
   private _noiseSizeLocation: WebGLUniformLocation | null;
 
-  constructor(gl: Context, shaders: ShaderStore) {
+  constructor(gl: Context, shaders: ShaderStore, rng: () => number) {
     this.program = shaders.getShader("nebulae")!;
     this.width = gl.canvas.width;
     this.height = gl.canvas.height;
@@ -86,7 +86,7 @@ export class NebulaeRenderer {
       "u_noiseSize"
     );
     this._noiseSize = 256;
-    this._noiseTexture = generateNoiseTexture(gl, Math.random, this._noiseSize);
+    this._noiseTexture = generateNoiseTexture(gl, rng, this._noiseSize);
   }
 
   render(
@@ -120,7 +120,7 @@ export class NebulaeRenderer {
       opts.color[2]
     );
     gl.uniform1f(this._densityLocation, opts.density);
-    
+
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     return destination;
   }

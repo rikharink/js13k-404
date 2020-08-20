@@ -6,9 +6,10 @@ import { TextureRenderer } from "./gl/renderers/texture-renderer";
 import { ShaderStore } from "./gl/shaders/shaders";
 
 export class Scene extends PingPong {
-  gl!: Context;
-  width: number;
-  height: number;
+  public rng: () => number;
+  public gl!: Context;
+  public width: number;
+  public height: number;
   private _tilemap?: TileMap;
   private _background?: IRenderable;
   private _sprites: IRenderable[] = [];
@@ -19,8 +20,9 @@ export class Scene extends PingPong {
   private _zoomX = 1;
   private _zoomY = 1;
 
-  constructor(gl: Context, shaders: ShaderStore) {
+  constructor(gl: Context, shaders: ShaderStore, rng: () => number) {
     super(gl);
+    this.rng = rng;
     [this.width, this.height] = [0, 0];
     this._textureRenderer = new TextureRenderer(gl, shaders);
   }

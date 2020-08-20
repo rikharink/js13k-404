@@ -85,9 +85,11 @@ export class Sprite {
   public canvas!: HTMLCanvasElement;
   ctx!: CanvasRenderingContext2D;
   pixels: any;
+  rng: () => number;
 
   constructor(
     mask: Mask,
+    rng: () => number,
     {
       colored = true,
       edgeBrightness = 0.3,
@@ -99,6 +101,7 @@ export class Sprite {
     this.width = mask.width * (mask.mirrorX ? 2 : 1);
     this.height = mask.height * (mask.mirrorY ? 2 : 1);
     this.mask = mask;
+    this.rng = rng;
     this.data = new Array(this.width * this.height);
 
     this.options = {
@@ -176,9 +179,9 @@ export class Sprite {
       for (let x = 0; x < w; x++) {
         const val = this.getData(x, y);
         if (val === MaskData.EmptyBody) {
-          this.setData(x, y, val * Math.round(Math.random()));
+          this.setData(x, y, val * Math.round(this.rng()));
         } else if (val === MaskData.BorderBody) {
-          if (Math.random() > 0.5) {
+          if (this.rng() > 0.5) {
             this.setData(x, y, 1);
           } else {
             this.setData(x, y, -1);
@@ -226,12 +229,12 @@ export class Sprite {
   }
 
   renderPixelData() {
-    const isVerticalGradient = Math.random() > 0.5;
+    const isVerticalGradient = this.rng() > 0.5;
     const saturation = Math.max(
-      Math.min(Math.random() * this.options.saturation!, 1),
+      Math.min(this.rng() * this.options.saturation!, 1),
       0
     );
-    let hue = Math.random();
+    let hue = this.rng();
     let ulen, vlen;
     if (isVerticalGradient) {
       ulen = this.height;
@@ -244,16 +247,16 @@ export class Sprite {
     for (let u = 0; u < ulen; u++) {
       // Create a non-uniform random number between 0 and 1 (lower numbers more likely)
       let isNewColor = Math.abs(
-        (Math.random() * 2 -
+        (this.rng() * 2 -
           1 +
-          (Math.random() * 2 - 1) +
-          (Math.random() * 2 - 1)) /
+          (this.rng() * 2 - 1) +
+          (this.rng() * 2 - 1)) /
           3
       );
 
       // Only change the color sometimes (values above 0.8 are less likely than others)
       if (isNewColor > 1 - this.options.colorVariations!) {
-        hue = Math.random();
+        hue = this.rng();
       }
 
       for (let v = 0; v < vlen; v++) {
@@ -274,7 +277,7 @@ export class Sprite {
             let brightness =
               Math.sin((u / ulen) * Math.PI) *
                 (1 - this.options.brightnessNoise!) +
-              Math.random() * this.options.brightnessNoise!;
+              this.rng() * this.options.brightnessNoise!;
 
             // Get the RGB color value
             this.hslToRgb(hue, saturation, brightness, rgb);
