@@ -3,6 +3,7 @@ import { Mask, Sprite } from "./engine/procgen/pixel-sprite";
 import shipVertex from "./engine/gl/shaders/colored-texture.vert";
 import shipFragment from "./engine/gl/shaders/colored-texture.frag";
 import { createProgram, Context } from "./engine/gl/util";
+import { Framebuffer } from "./star-field";
 
 export class Ship implements IRenderable {
   resolutionLocation: WebGLUniformLocation | null;
@@ -106,7 +107,7 @@ export class Ship implements IRenderable {
 
   }
 
-  render(now?: number): void {
+  render(gl: Context, source: Framebuffer, destination: Framebuffer, now?: number): Framebuffer {
     throw new Error("Method not implemented.");
   }
 }

@@ -1,10 +1,9 @@
 import "./style/main.css";
-import { StarField } from './star-field';
-import { Scene } from './engine/scene';
+import { StarField } from "./star-field";
+import { Scene } from "./engine/scene";
 import { setupCanvas } from "./engine/util";
 import { TileMap, Tile, getTileData, getTileAtlas } from "./engine/tile-map";
 import { Context, getContext } from "./engine/gl/util";
-
 
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 const gl = getContext(canvas);
@@ -14,10 +13,10 @@ let scene: Scene;
 function gameloop(now: number) {
   requestAnimationFrame(gameloop);
   setupCanvas(gl!, now);
-  scene.render(now);
+  scene.render(gl, now);
 }
 
-function getTileMap(gl: Context){
+function getTileMap(gl: Context) {
   let tilesize = 32;
   let tiles = [
     getTileData(tilesize, [0, 0, 0, 0]),
@@ -142,17 +141,12 @@ function getTileMap(gl: Context){
   return new TileMap(gl, texture, shape, tilesize, tm);
 }
 
-function getBackground(gl: Context): StarField{
-  return new StarField(gl, gl.canvas.width, gl.canvas.height);
-}
-
 function main() {
   if (!gl) {
     return;
   }
   scene = new Scene(gl, gl.canvas.width, gl.canvas.height);
-  scene.background = getBackground(gl);
-  scene.tilemap = getTileMap(gl);
+  scene.background = new StarField(gl, gl.canvas.width, gl.canvas.height, 0, 0);
   requestAnimationFrame(gameloop);
 }
 

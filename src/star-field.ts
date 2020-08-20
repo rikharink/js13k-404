@@ -3,18 +3,32 @@ import nebulae from "./engine/gl/shaders/nebulae.frag";
 import star from "./engine/gl/shaders/star.frag";
 import texture from "./engine/gl/shaders/texture.frag";
 
+declare global {
+  interface Window {
+    Dump: any;
+  }
+}
+
+window.Dump = window.Dump || {};
+
 import { IRenderable } from "./engine/renderable";
 import {
   Context,
   createProgram,
   createVertexArray,
   bindVertexArray,
-  createAndSetupTexture,
+  Vao,
+  generateNoiseTexture,
 } from "./engine/gl/util";
+import { createImageFromTexture } from "./engine/debug/index";
+
+export interface Framebuffer {
+  framebuffer: WebGLFramebuffer | null;
+  texture: WebGLTexture | null;
+}
 
 export class StarField implements IRenderable {
-  public resolutionLocation: WebGLUniformLocation | null = null;
-  public gl: Context;
+  public gl!: Context;
   public width: number;
   public height: number;
 
@@ -23,17 +37,17 @@ export class StarField implements IRenderable {
   private _copyShader: WebGLProgram;
   private _positionbuffer: WebGLBuffer;
   private _uvbuffer: WebGLBuffer;
-  private _vao: import("c:/repos/games/js13k-404/src/engine/gl/util").Vao;
+  private _vao: Vao;
   private _nebulaeAttributePositionLocation: number;
   private _nebulaeAttributeUvLocation: number;
   private _starAttributePositionLocation: number;
   private _starAttributeUvLocation: number;
-  private _nebuleaSourceLocation: WebGLUniformLocation;
-  private _nebuleaOffsetLocation: WebGLUniformLocation;
-  private _nebuleaScaleLocation: WebGLUniformLocation;
-  private _nebuleaFalloffLocation: WebGLUniformLocation;
-  private _nebuleaColorLocation: WebGLUniformLocation;
-  private _nebuleaDensityLocation: WebGLUniformLocation;
+  private _nebulaeSourceLocation: WebGLUniformLocation;
+  private _nebulaeOffsetLocation: WebGLUniformLocation;
+  private _nebulaeScaleLocation: WebGLUniformLocation;
+  private _nebulaeFalloffLocation: WebGLUniformLocation;
+  private _nebulaeColorLocation: WebGLUniformLocation;
+  private _nebulaeDensityLocation: WebGLUniformLocation;
   private _starSourceLocation: WebGLUniformLocation;
   private _starCoreColorLocation: WebGLUniformLocation;
   private _starCoreRadiusLocation: WebGLUniformLocation;
@@ -46,12 +60,17 @@ export class StarField implements IRenderable {
   private _copyAttributeUvLocation: number;
   private _copySourceLocation: WebGLUniformLocation | null;
   private _pointStarTexture: WebGLTexture;
-  private _ping: WebGLFramebuffer;
-  private _pong: WebGLFramebuffer;
-  private _starFieldFrameBuffer: WebGLFramebuffer;
+  private _noiseTexture: WebGLTexture;
+  private _resultTexture!: WebGLTexture;
+  private _ping!: Framebuffer;
+  private _pong!: Framebuffer;
+  private _starfield!: Framebuffer;
   private _nebulaeCount: number;
   private _starCount: number;
-  private _scale: number = 1;
+  private _scale: number = 2;
+  private _nebulaeNoiseLocation: WebGLUniformLocation | null;
+  private _nebulaeNoiseSizeLocation: WebGLUniformLocation | null;
+  private _noiseSize: number;
 
   constructor(
     gl: Context,
@@ -60,14 +79,14 @@ export class StarField implements IRenderable {
     nebulaeCount: number,
     starCount: number
   ) {
-    this.gl = gl;
     this._vao = createVertexArray(gl)!;
+    bindVertexArray(gl, this._vao);
     [this.width, this.height] = [width, height];
     this._nebulaeCount = nebulaeCount;
     this._starCount = starCount;
-    this._nebulaeShader = createProgram(this.gl, fullscreenTexture, nebulae);
-    this._starShader = createProgram(this.gl, fullscreenTexture, star);
-    this._copyShader = createProgram(this.gl, fullscreenTexture, texture);
+    this._nebulaeShader = createProgram(gl, fullscreenTexture, nebulae);
+    this._starShader = createProgram(gl, fullscreenTexture, star);
+    this._copyShader = createProgram(gl, fullscreenTexture, texture);
     this._positionbuffer = gl.createBuffer()!;
     this._uvbuffer = gl.createBuffer()!;
     gl.bindBuffer(gl.ARRAY_BUFFER, this._positionbuffer);
@@ -110,27 +129,32 @@ export class StarField implements IRenderable {
       this._copyShader,
       "u_source"
     );
-    this._nebuleaSourceLocation = gl.getUniformLocation(
+    this._nebulaeSourceLocation = gl.getUniformLocation(
       this._nebulaeShader,
       "u_source"
     )!;
-    this._nebuleaOffsetLocation = gl.getUniformLocation(
+    this._nebulaeNoiseLocation = gl.getUniformLocation(
+      this._nebulaeShader,
+      "u_noise"
+    );
+    this._nebulaeNoiseSizeLocation = gl.getUniformLocation(this._nebulaeShader, "u_noiseSize");
+    this._nebulaeOffsetLocation = gl.getUniformLocation(
       this._nebulaeShader,
       "u_offset"
     )!;
-    this._nebuleaScaleLocation = gl.getUniformLocation(
+    this._nebulaeScaleLocation = gl.getUniformLocation(
       this._nebulaeShader,
       "u_scale"
     )!;
-    this._nebuleaFalloffLocation = gl.getUniformLocation(
+    this._nebulaeFalloffLocation = gl.getUniformLocation(
       this._nebulaeShader,
       "u_falloff"
     )!;
-    this._nebuleaColorLocation = gl.getUniformLocation(
+    this._nebulaeColorLocation = gl.getUniformLocation(
       this._nebulaeShader,
       "u_color"
     )!;
-    this._nebuleaDensityLocation = gl.getUniformLocation(
+    this._nebulaeDensityLocation = gl.getUniformLocation(
       this._nebulaeShader,
       "u_density"
     )!;
@@ -167,53 +191,135 @@ export class StarField implements IRenderable {
       this._starShader,
       "u_scale"
     )!;
-    this._ping = this.gl.createFramebuffer()!;
-    this._pong = this.gl.createFramebuffer()!;
-    this._starFieldFrameBuffer = this.gl.createFramebuffer()!;
-    this._pointStarTexture = this.generatePointStarTexture();
+    this._pointStarTexture = this.generatePointStarTexture(gl);
+    this._noiseSize = 256;
+    this._noiseTexture = generateNoiseTexture(gl, Math.random, this._noiseSize);
+    this.setupFramebuffers(gl);
+    this.draw(gl);
   }
 
-  private generatePointStarTexture(): WebGLTexture {
+  private setupFramebuffers(gl: Context) {
+    const pingTexture = gl.createTexture()!;
+    gl.bindTexture(gl.TEXTURE_2D, pingTexture);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGB,
+      gl.canvas.width,
+      gl.canvas.height,
+      0,
+      gl.RGB,
+      gl.UNSIGNED_BYTE,
+      null
+    );
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    const pingFramebuffer = gl.createFramebuffer()!;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, pingFramebuffer);
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.framebufferTexture2D(
+      gl.FRAMEBUFFER,
+      gl.COLOR_ATTACHMENT0,
+      gl.TEXTURE_2D,
+      pingTexture,
+      0
+    );
+    this._ping = {
+      framebuffer: pingFramebuffer,
+      texture: pingTexture,
+    };
+
+    const pongTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, pongTexture);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGB,
+      gl.canvas.width,
+      gl.canvas.height,
+      0,
+      gl.RGB,
+      gl.UNSIGNED_BYTE,
+      null
+    );
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    const pongFramebuffer = gl.createFramebuffer()!;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, pongFramebuffer);
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.framebufferTexture2D(
+      gl.FRAMEBUFFER,
+      gl.COLOR_ATTACHMENT0,
+      gl.TEXTURE_2D,
+      pongTexture,
+      0
+    );
+
+    this._pong = {
+      framebuffer: pongFramebuffer,
+      texture: pongTexture,
+    };
+
+    const starfieldTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, starfieldTexture);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGB,
+      gl.canvas.width,
+      gl.canvas.height,
+      0,
+      gl.RGB,
+      gl.UNSIGNED_BYTE,
+      null
+    );
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    const starfieldFrameBuffer = gl.createFramebuffer()!;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, starfieldFrameBuffer);
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.framebufferTexture2D(
+      gl.FRAMEBUFFER,
+      gl.COLOR_ATTACHMENT0,
+      gl.TEXTURE_2D,
+      starfieldTexture,
+      0
+    );
+    this._starfield = {
+      framebuffer: starfieldFrameBuffer,
+      texture: starfieldTexture,
+    };
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
+
+  private generatePointStarTexture(gl: Context): WebGLTexture {
     const data = this.generatePointStars(
-      this.width,
-      this.height,
+      gl.canvas.width,
+      gl.canvas.height,
       0.05,
       0.125,
       Math.random
     );
-    let pointStarTexture = this.gl.createTexture()!;
-    this.gl.bindTexture(this.gl.TEXTURE_2D, pointStarTexture);
-    this.gl.texImage2D(
-      this.gl.TEXTURE_2D,
+    let pointStarTexture = gl.createTexture()!;
+    gl.bindTexture(gl.TEXTURE_2D, pointStarTexture);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
       0,
-      this.gl.RGB,
-      this.width,
-      this.height,
+      gl.RGB,
+      gl.canvas.width,
+      gl.canvas.height,
       0,
-      this.gl.RGB,
-      this.gl.UNSIGNED_BYTE,
+      gl.RGB,
+      gl.UNSIGNED_BYTE,
       data
     );
-    this.gl.texParameteri(
-      this.gl.TEXTURE_2D,
-      this.gl.TEXTURE_WRAP_S,
-      this.gl.CLAMP_TO_EDGE
-    );
-    this.gl.texParameteri(
-      this.gl.TEXTURE_2D,
-      this.gl.TEXTURE_WRAP_T,
-      this.gl.CLAMP_TO_EDGE
-    );
-    this.gl.texParameteri(
-      this.gl.TEXTURE_2D,
-      this.gl.TEXTURE_MIN_FILTER,
-      this.gl.NEAREST
-    );
-    this.gl.texParameteri(
-      this.gl.TEXTURE_2D,
-      this.gl.TEXTURE_MAG_FILTER,
-      this.gl.NEAREST
-    );
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     return pointStarTexture;
   }
 
@@ -238,55 +344,57 @@ export class StarField implements IRenderable {
   }
 
   private renderNebulae(
-    source: WebGLTexture,
+    gl: Context,
+    source: Framebuffer,
     offset: [number, number],
     scale: number,
     falloff: number,
     color: [number, number, number],
     density: number,
-    destination: WebGLFramebuffer
-  ): WebGLFramebuffer {
-    this.gl.viewport(0, 0, this.width, this.height);
-    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, destination);
-    this.gl.bindBuffer(
-      this._nebulaeAttributePositionLocation,
-      this._positionbuffer
-    );
-    this.gl.enableVertexAttribArray(this._nebulaeAttributePositionLocation);
-    this.gl.vertexAttribPointer(
+    destination: Framebuffer
+  ): Framebuffer {
+    gl.useProgram(this._nebulaeShader);
+    bindVertexArray(gl, this._vao);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, destination.framebuffer);
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._positionbuffer);
+    gl.enableVertexAttribArray(this._nebulaeAttributePositionLocation);
+    gl.vertexAttribPointer(
       this._nebulaeAttributePositionLocation,
       2,
-      this.gl.FLOAT,
+      gl.FLOAT,
       false,
       0,
       0
     );
-    this.gl.bindBuffer(this._nebulaeAttributeUvLocation, this._uvbuffer);
-    this.gl.enableVertexAttribArray(this._nebulaeAttributeUvLocation);
-    this.gl.vertexAttribPointer(
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._uvbuffer);
+    gl.enableVertexAttribArray(this._nebulaeAttributeUvLocation);
+    gl.vertexAttribPointer(
       this._nebulaeAttributeUvLocation,
       2,
-      this.gl.FLOAT,
+      gl.FLOAT,
       false,
       0,
       0
     );
-    this.gl.useProgram(this._nebulaeShader);
-    bindVertexArray(this.gl, this._vao);
-    this.gl.uniform1i(this._nebuleaSourceLocation, this.gl.TEXTURE0);
-    this.gl.bindTexture(this.gl.TEXTURE0, source);
-    this.gl.uniform2f(this._nebuleaOffsetLocation, offset[0], offset[1]);
-    this.gl.uniform1f(this._nebuleaScaleLocation, scale);
-    this.gl.uniform1f(this._nebuleaFalloffLocation, falloff);
-    this.gl.uniform3f(this._nebuleaColorLocation, color[0], color[1], color[2]);
-    this.gl.uniform1f(this._nebuleaDensityLocation, density);
-    this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-    bindVertexArray(this.gl, null);
+    bindVertexArray(gl, null);
+    gl.uniform1i(this._nebulaeSourceLocation, 0);
+    gl.bindTexture(gl.TEXTURE_2D, source.texture);
+    gl.uniform1i(this._nebulaeNoiseLocation, 1);
+    gl.bindTexture(gl.TEXTURE_2D, this._noiseTexture);
+    gl.uniform1f(this._nebulaeNoiseSizeLocation, this._noiseSize);
+    gl.uniform2f(this._nebulaeOffsetLocation, offset[0], offset[1]);
+    gl.uniform1f(this._nebulaeScaleLocation, scale);
+    gl.uniform1f(this._nebulaeFalloffLocation, falloff);
+    gl.uniform3f(this._nebulaeColorLocation, color[0], color[1], color[2]);
+    gl.uniform1f(this._nebulaeDensityLocation, density);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
     return destination;
   }
 
   private renderStar(
-    source: WebGLTexture,
+    gl: Context,
+    source: Framebuffer,
     coreColor: [number, number, number],
     coreRadius: number,
     haloColor: [number, number, number],
@@ -294,110 +402,99 @@ export class StarField implements IRenderable {
     center: [number, number],
     resolution: [number, number],
     scale: number,
-    destination: WebGLFramebuffer
-  ): WebGLFramebuffer {
-    this.gl.viewport(0, 0, this.width, this.height);
-    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, destination);
-    this.gl.bindBuffer(
-      this._starAttributePositionLocation,
-      this._positionbuffer
-    );
-    this.gl.enableVertexAttribArray(this._starAttributePositionLocation);
-    this.gl.vertexAttribPointer(
+    destination: Framebuffer
+  ): Framebuffer {
+    gl.useProgram(this._starShader);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, destination.framebuffer);
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._positionbuffer);
+    gl.enableVertexAttribArray(this._starAttributePositionLocation);
+    gl.vertexAttribPointer(
       this._starAttributePositionLocation,
       2,
-      this.gl.FLOAT,
+      gl.FLOAT,
       false,
       0,
       0
     );
-    this.gl.bindBuffer(this._starAttributeUvLocation, this._uvbuffer);
-    this.gl.enableVertexAttribArray(this._starAttributeUvLocation);
-    this.gl.vertexAttribPointer(
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._uvbuffer);
+    gl.enableVertexAttribArray(this._starAttributeUvLocation);
+    gl.vertexAttribPointer(
       this._starAttributeUvLocation,
       2,
-      this.gl.FLOAT,
+      gl.FLOAT,
       false,
       0,
       0
     );
-    this.gl.useProgram(this._starShader);
-    bindVertexArray(this.gl, this._vao);
-    this.gl.uniform1i(this._starSourceLocation, this.gl.TEXTURE0);
-    this.gl.bindTexture(this.gl.TEXTURE0, source);
-    this.gl.uniform3f(
+    bindVertexArray(gl, this._vao);
+    gl.uniform1i(this._starSourceLocation, 0);
+    gl.bindTexture(gl.TEXTURE_2D, source.texture);
+    gl.uniform3f(
       this._starCoreColorLocation,
       coreColor[0],
       coreColor[1],
       coreColor[2]
     );
-    this.gl.uniform1f(this._starCoreRadiusLocation, coreRadius);
-    this.gl.uniform3f(
+    gl.uniform1f(this._starCoreRadiusLocation, coreRadius);
+    gl.uniform3f(
       this._starHaloColorLocation,
       haloColor[0],
       haloColor[1],
       haloColor[2]
     );
-    this.gl.uniform1f(this._starHaloFalloffLocation, haloFalloff);
-    this.gl.uniform2f(this._starCenterLocation, center[0], center[1]);
-    this.gl.uniform2f(
-      this._starResolutionLocation,
-      resolution[0],
-      resolution[1]
-    );
-    this.gl.uniform1f(this._starScaleLocation, scale);
-    this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-    bindVertexArray(this.gl, null);
+    gl.uniform1f(this._starHaloFalloffLocation, haloFalloff);
+    gl.uniform2f(this._starCenterLocation, center[0], center[1]);
+    gl.uniform2f(this._starResolutionLocation, resolution[0], resolution[1]);
+    gl.uniform1f(this._starScaleLocation, scale);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    bindVertexArray(gl, null);
     return destination;
   }
 
   private renderCopy(
-    source: WebGLTexture,
-    destination: WebGLFramebuffer | null
+    gl: Context,
+    source: Framebuffer,
+    destination: Framebuffer
   ) {
-    this.gl.viewport(0, 0, this.width, this.height);
-    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, destination);
-    this.gl.bindBuffer(
-      this._copyAttributePositionLocation,
-      this._positionbuffer
-    );
-    this.gl.enableVertexAttribArray(this._copyAttributePositionLocation);
-    this.gl.vertexAttribPointer(
+    gl.useProgram(this._copyShader);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, destination.framebuffer);
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._positionbuffer);
+    gl.enableVertexAttribArray(this._copyAttributePositionLocation);
+    gl.vertexAttribPointer(
       this._copyAttributePositionLocation,
       2,
-      this.gl.FLOAT,
+      gl.FLOAT,
       false,
       0,
       0
     );
-    this.gl.bindBuffer(this._copyAttributeUvLocation, this._uvbuffer);
-    this.gl.enableVertexAttribArray(this._copyAttributeUvLocation);
-    this.gl.vertexAttribPointer(
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._uvbuffer);
+    gl.enableVertexAttribArray(this._copyAttributeUvLocation);
+    gl.vertexAttribPointer(
       this._copyAttributeUvLocation,
       2,
-      this.gl.FLOAT,
+      gl.FLOAT,
       false,
       0,
       0
     );
-    this.gl.useProgram(this._copyShader);
-    bindVertexArray(this.gl, this._vao);
-    this.gl.uniform1i(this._copySourceLocation, this.gl.TEXTURE0);
-    this.gl.bindTexture(this.gl.TEXTURE0, source);
-    this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-    bindVertexArray(this.gl, null);
+    bindVertexArray(gl, this._vao);
+    gl.uniform1i(this._copySourceLocation, 0);
+    gl.bindTexture(gl.TEXTURE_2D, source.texture);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    bindVertexArray(gl, null);
     return destination;
   }
 
   private pingpong(
-    initial: WebGLFramebuffer,
-    alpha: WebGLFramebuffer,
-    beta: WebGLFramebuffer,
+    gl: Context,
+    initial: Framebuffer,
+    alpha: Framebuffer,
+    beta: Framebuffer,
     count: number,
-    func: (
-      source: WebGLFramebuffer,
-      destination: WebGLFramebuffer
-    ) => WebGLFramebuffer
+    func: (source: Framebuffer, destination: Framebuffer) => Framebuffer
   ) {
     if (count === 0) {
       return initial;
@@ -425,16 +522,39 @@ export class StarField implements IRenderable {
     }
   }
 
-  private setup() {
-    this.gl.viewport(0, 0, this.width, this.height);
-    const copyOut = this.renderCopy(this._pointStarTexture, this._ping)!;
+  private resetFramebuffers(gl: Context) {
+    gl.clearColor(0, 0, 0, 1);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this._ping.framebuffer);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this._pong.framebuffer);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    
+    gl.deleteTexture(this._ping.texture);
+    gl.deleteFramebuffer(this._ping.framebuffer);
+    gl.deleteTexture(this._pong.texture);
+    gl.deleteFramebuffer(this._pong.framebuffer);
+    gl.deleteTexture(this._starfield.texture);
+    gl.deleteFramebuffer(this._starfield.framebuffer);
+    this.setupFramebuffers(gl);
+  }
+
+  private draw(gl: Context): void {
+    this.resetFramebuffers(gl);
+    this.renderCopy(
+      gl,
+      { framebuffer: null, texture: this._pointStarTexture },
+      this._ping
+    )!;
     const nebulaeOut = this.pingpong(
-      copyOut,
+      gl,
+      this._ping,
       this._ping,
       this._pong,
       this._nebulaeCount,
-      (source: WebGLFramebuffer, destination: WebGLFramebuffer) =>
+      (source: Framebuffer, destination: Framebuffer) =>
         this.renderNebulae(
+          gl,
           source,
           [Math.random() * 100, Math.random() * 100],
           (Math.random() * 2 + 1) / this._scale,
@@ -446,40 +566,56 @@ export class StarField implements IRenderable {
     );
 
     const starOut = this.pingpong(
+      gl,
       nebulaeOut,
       this._ping,
       this._pong,
       this._starCount,
-      (source: WebGLFramebuffer, destination: WebGLFramebuffer) =>
+      (source: Framebuffer, destination: Framebuffer) =>
         this.renderStar(
+          gl,
           source,
           [1, 1, 1],
           0.0,
           [Math.random(), Math.random(), Math.random()],
           Math.random() * 1024 + 32,
           [Math.random(), Math.random()],
-          [this.width, this.height],
+          [gl.canvas.width, gl.canvas.height],
           this._scale,
           destination
         )
     );
 
     const sunOut = this.renderStar(
+      gl,
       starOut,
       [1, 1, 1],
       Math.random() * 0.025 + 0.025,
       [Math.random(), Math.random(), Math.random()],
       Math.random() * 32 + 32,
       [Math.random(), Math.random()],
-      [this.width, this.height],
+      [gl.canvas.width, gl.canvas.height],
       this._scale,
-      this._starFieldFrameBuffer
+      this._starfield
     );
-    return sunOut;
+
+    this._resultTexture = sunOut.texture!;
   }
 
-  public render(now?: number): void {
-    this.gl.viewport(0, 0, this.width, this.height);
-    this.renderCopy(this._starFieldFrameBuffer, null);
+  public render(
+    gl: Context,
+    source: Framebuffer,
+    destination: Framebuffer
+  ): void {
+    if (this.width != gl.canvas.width || this.height != gl.canvas.height) {
+      this.width = gl.canvas.width;
+      this.height = gl.canvas.height;
+      this.draw(gl);
+    }
+    this.renderCopy(
+      gl,
+      { framebuffer: null, texture: this._resultTexture },
+      destination
+    )!;
   }
 }

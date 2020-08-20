@@ -9,6 +9,7 @@ import {
   Vao,
 } from "./gl/util";
 import { orthographic, scale, identity, translate, zRotate } from "./math/m4";
+import { Framebuffer } from "../star-field";
 
 const dst = new Float32Array(16);
 
@@ -92,6 +93,7 @@ export class TileMap implements IRenderable {
   public mapHeight: number;
   public width: number;
   public height: number;
+  public renderResult?: Framebuffer;
   private program: WebGLProgram;
   private positionLocation: number;
   private matrixLocation: WebGLUniformLocation | null;
@@ -193,10 +195,7 @@ export class TileMap implements IRenderable {
     return texture;
   }
 
-  render(
-    scrollX?: number,
-    scrollY?: number
-  ) {
+  render(gl: Context, source: Framebuffer, destination: Framebuffer, scrollX?: number, scrollY?: number): void {
     this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
     this.gl.enableVertexAttribArray(this.positionLocation);
@@ -272,5 +271,7 @@ export class TileMap implements IRenderable {
       this.tint[3]
     );
     this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+    //TODO
+    this.renderResult = { framebuffer: null, texture: null };
   }
 }

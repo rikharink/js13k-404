@@ -96,6 +96,6 @@ export function setupCanvas(gl: Context, now: number) {
   if (resizeCanvasToDisplaySize(gl.canvas as HTMLCanvasElement)) {
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
   }
-  gl.clearColor(1, 1, 1, 1);
+  gl.clearColor(1, 1, 1, 0);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 }

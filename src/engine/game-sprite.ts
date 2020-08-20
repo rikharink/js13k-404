@@ -1,4 +1,4 @@
-import { Context, createVertexArray, Vao, bindVertexArray } from './gl/util';
+import { Context, createVertexArray, Vao, bindVertexArray } from "./gl/util";
 import { orthographic, translate, scale, translation } from "./math/m4";
 
 const dst = new Float32Array(16);
