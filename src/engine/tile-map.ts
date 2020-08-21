@@ -11,6 +11,7 @@ import { orthographic, scale, identity, translate, zRotate } from "./math/m4";
 import { Framebuffer } from "./gl/framebuffer";
 import { TextureRenderer } from "./gl/renderers/texture-renderer";
 import { ShaderStore } from "./gl/shaders/shaders";
+import { GLConstants } from "./gl/constants";
 
 const dst = new Float32Array(16);
 
@@ -91,8 +92,8 @@ export class TileMap implements IRenderable {
     this.positionLocation = gl.getAttribLocation(this.program, "a_position");
     this.positionBuffer = gl.createBuffer();
 
-    gl.vertexAttribPointer(this.positionLocation, 2, gl.FLOAT, false, 0, 0);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
+    gl.vertexAttribPointer(this.positionLocation, 2, GLConstants.FLOAT, false, 0, 0);
+    gl.bindBuffer(GLConstants.ARRAY_BUFFER, this.positionBuffer);
     gl.enableVertexAttribArray(this.positionLocation);
 
     this.mapWidth = map[0].length;
@@ -112,12 +113,12 @@ export class TileMap implements IRenderable {
       "u_tilesetSize"
     );
     this.tintLocation = gl.getUniformLocation(this.program, "u_tint");
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
+    gl.bindBuffer(GLConstants.ARRAY_BUFFER, this.positionBuffer);
     this.positions = [0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1];
     gl.bufferData(
-      gl.ARRAY_BUFFER,
+      GLConstants.ARRAY_BUFFER,
       new Float32Array(this.positions),
-      gl.STATIC_DRAW
+      GLConstants.STATIC_DRAW
     );
     this.tilemapTexture = this.getTilemapTexture(gl);
   }
@@ -134,15 +135,15 @@ export class TileMap implements IRenderable {
         tilemapU8[off + 3] = tile.flags();
         i++;
       }
-      i += width - this.mapWidth;
+      i += this.width - this.mapWidth;
     }
 
     return createAndSetupTexture(gl, {
-      wrap: gl.REPEAT,
-      filter: gl.NEAREST,
-      format: gl.RGBA,
-      width: width,
-      height: height,
+      wrap: GLConstants.REPEAT,
+      filter: GLConstants.NEAREST,
+      format: GLConstants.RGBA,
+      width: this.width,
+      height: this.height,
       pixels: tilemapU8,
     });
   }
@@ -157,7 +158,7 @@ export class TileMap implements IRenderable {
     this.textureRenderer.render(gl, source.texture!, destination.framebuffer);
     gl.useProgram(this.program);
     bindVAO(gl, this.vao!);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, destination.framebuffer);
+    gl.bindFramebuffer(GLConstants.FRAMEBUFFER, destination.framebuffer);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
     const mat = new Float32Array(16);
@@ -197,12 +198,12 @@ export class TileMap implements IRenderable {
 
     const texUnit = 1;
     gl.uniform1i(this.tilemapLocation, texUnit);
-    gl.activeTexture(gl.TEXTURE0 + texUnit);
-    gl.bindTexture(gl.TEXTURE_2D, this.tilemapTexture);
+    gl.activeTexture(GLConstants.TEXTURE0 + texUnit);
+    gl.bindTexture(GLConstants.TEXTURE_2D, this.tilemapTexture);
 
     gl.uniform1i(this.tilesetLocation, texUnit + 1);
-    gl.activeTexture(gl.TEXTURE0 + texUnit + 1);
-    gl.bindTexture(gl.TEXTURE_2D, this.tileset);
+    gl.activeTexture(GLConstants.TEXTURE0 + texUnit + 1);
+    gl.bindTexture(GLConstants.TEXTURE_2D, this.tileset);
 
     gl.uniform2f(
       this.tilemapSizeLocation,
@@ -222,7 +223,7 @@ export class TileMap implements IRenderable {
       this.tint[2],
       this.tint[3]
     );
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.drawArrays(GLConstants.TRIANGLES, 0, 6);
   }
 }
 
@@ -273,108 +274,40 @@ export function getTileMap(gl: Context, shaders: ShaderStore) {
     getTileData(tilesize, [0, 0, 255, 255]),
     getTileData(tilesize, [0, 255, 0, 255]),
     getTileData(tilesize, [255, 255, 255, 255]),
-    getTileData(tilesize, [0, 0, 0, 255]),
+    getTileData(tilesize, [0, 0, 0, 0]),
+    getTileData(tilesize, [0, 0, 0, 0]),
+    getTileData(tilesize, [0, 0, 0, 0]),
+    getTileData(tilesize, [0, 0, 0, 0]),
   ];
   let tileAtlas = getTileAtlas(tilesize, tiles);
   let shape: [number, number] = [tiles.length, 1];
   let water = new Tile([1, 0], false, false, false);
   let grass = new Tile([2, 0], false, false, false);
   let ice = new Tile([3, 0], false, false, false);
-  let wall = new Tile([4, 0], false, false, false);
+  let wall = new Tile([3, 0], false, false, false);
   let tm = [
-    [wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall],
-    [
-      wall,
-      water,
-      water,
-      water,
-      water,
-      water,
-      water,
-      water,
-      water,
-      water,
-      water,
-      wall,
-    ],
-    [
-      wall,
-      water,
-      water,
-      water,
-      water,
-      water,
-      water,
-      water,
-      water,
-      water,
-      water,
-      wall,
-    ],
-    [
-      wall,
-      water,
-      water,
-      grass,
-      grass,
-      grass,
-      grass,
-      grass,
-      grass,
-      water,
-      water,
-      wall,
-    ],
-    [wall, water, water, grass, ice, ice, ice, ice, grass, water, water, wall],
-    [
-      wall,
-      water,
-      water,
-      grass,
-      grass,
-      grass,
-      grass,
-      grass,
-      grass,
-      water,
-      water,
-      wall,
-    ],
-    [
-      wall,
-      water,
-      water,
-      water,
-      water,
-      water,
-      water,
-      water,
-      water,
-      water,
-      water,
-      wall,
-    ],
-    [
-      wall,
-      water,
-      water,
-      water,
-      water,
-      water,
-      water,
-      water,
-      water,
-      water,
-      water,
-      wall,
-    ],
-    [wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall],
+    [wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall],
+    [wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall],
+    [wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall],
+    [wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall],
+    [wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall],
+    [wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall],
+    [wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall],
+    [wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall],
+    [wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall],
+    [wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall],
+    [wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall],
+    [wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall],
+    [wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall],
+    [wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall],
+    [wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall],
+    [wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall, wall],
   ];
 
   const texture = createAndSetupTexture(gl, {
-    wrap: gl.REPEAT,
-    filter: gl.LINEAR,
-    format: gl.RGBA,
+    wrap: GLConstants.REPEAT,
+    filter: GLConstants.LINEAR,
+    format: GLConstants.RGBA,
     width: tilesize * tiles.length,
     height: tilesize,
     pixels: tileAtlas,

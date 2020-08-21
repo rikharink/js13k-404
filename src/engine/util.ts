@@ -1,6 +1,7 @@
 const DEBUG_MODE = true;
 import { updateDebugInfo } from "./debug/index";
 import { Context } from "./gl/util";
+import { GLConstants } from "./gl/constants";
 
 let then = 0;
 
@@ -96,6 +97,6 @@ export function setupCanvas(gl: Context, now: number) {
   if (resizeCanvasToDisplaySize(gl.canvas as HTMLCanvasElement)) {
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
   }
-  gl.clearColor(1, 1, 1, 0);
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.clearColor(0, 0, 0, 0);
+  gl.clear(GLConstants.COLOR_BUFFER_BIT | GLConstants.DEPTH_BUFFER_BIT);
 }

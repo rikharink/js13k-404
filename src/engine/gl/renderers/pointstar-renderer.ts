@@ -2,6 +2,7 @@ import { Framebuffer } from "../framebuffer";
 import { Context, createAndSetupTexture } from "../util";
 import { ShaderStore } from "../shaders/shaders";
 import { TextureRenderer } from "./texture-renderer";
+import { GLConstants } from "../constants";
 
 interface PointstarOptions {}
 
@@ -30,18 +31,18 @@ export class PointstarRenderer {
       this.height = gl.canvas.height;
       this.texture = this.generatePointStarTexture(gl);
     }
-    gl.bindFramebuffer(gl.FRAMEBUFFER, destination.framebuffer);
+    gl.bindFramebuffer(GLConstants.FRAMEBUFFER, destination.framebuffer);
     gl.clearColor(1, 1, 0, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.clear(GLConstants.COLOR_BUFFER_BIT);
     this._textureRenderer.render(gl, this.texture, destination.framebuffer);
     return destination;
   }
 
   private generatePointStarTexture(gl: Context): WebGLTexture {
     return createAndSetupTexture(gl, {
-      wrap: gl.CLAMP_TO_EDGE,
-      filter: gl.LINEAR,
-      format: gl.RGB,
+      wrap: GLConstants.CLAMP_TO_EDGE,
+      filter: GLConstants.LINEAR,
+      format: GLConstants.RGB,
       width: gl.canvas.width,
       height: gl.canvas.height,
       pixels: this.generatePointStars(

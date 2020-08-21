@@ -1,3 +1,5 @@
+import { GLConstants } from "./constants";
+
 export type Context = WebGLRenderingContext;
 export type Vao = WebGLVertexArrayObject;
 
@@ -38,8 +40,8 @@ export function createProgram(
   sourceVertex: string,
   sourceFragment: string
 ): WebGLProgram {
-  const vertexShader = createShader(gl, gl.VERTEX_SHADER, sourceVertex);
-  const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, sourceFragment);
+  const vertexShader = createShader(gl, GLConstants.VERTEX_SHADER, sourceVertex);
+  const fragmentShader = createShader(gl, GLConstants.FRAGMENT_SHADER, sourceFragment);
   const program = gl.createProgram();
   gl.attachShader(program!, vertexShader);
   gl.attachShader(program!, fragmentShader);
@@ -54,7 +56,7 @@ export function setFramebuffer(
   width: number,
   height: number
 ) {
-  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+  gl.bindFramebuffer(GLConstants.FRAMEBUFFER, fbo);
   if (resolutionLocation) {
     gl.uniform2f(resolutionLocation, width, height);
   }
@@ -73,20 +75,20 @@ export function createAndSetupTexture(
   }
 ) {
   let texture = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, opts.wrap);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, opts.wrap);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, opts.filter);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, opts.filter);
+  gl.bindTexture(GLConstants.TEXTURE_2D, texture);
+  gl.texParameteri(GLConstants.TEXTURE_2D, GLConstants.TEXTURE_WRAP_S, opts.wrap);
+  gl.texParameteri(GLConstants.TEXTURE_2D, GLConstants.TEXTURE_WRAP_T, opts.wrap);
+  gl.texParameteri(GLConstants.TEXTURE_2D, GLConstants.TEXTURE_MIN_FILTER, opts.filter);
+  gl.texParameteri(GLConstants.TEXTURE_2D, GLConstants.TEXTURE_MAG_FILTER, opts.filter);
   gl.texImage2D(
-    gl.TEXTURE_2D,
+    GLConstants.TEXTURE_2D,
     0,
     opts.format,
     opts.width,
     opts.height,
     0,
     opts.format,
-    gl.UNSIGNED_BYTE,
+    GLConstants.UNSIGNED_BYTE,
     opts.pixels
   );
   return texture!;
@@ -106,9 +108,9 @@ export function generateNoiseTexture(
     array[i * 2 + 1] = Math.round(0.5 * (1.0 + r[1]) * 255);
   }
   let texture = createAndSetupTexture(gl, {
-    wrap: gl.REPEAT,
-    filter: gl.LINEAR,
-    format: gl.LUMINANCE_ALPHA,
+    wrap: GLConstants.REPEAT,
+    filter: GLConstants.LINEAR,
+    format: GLConstants.LUMINANCE_ALPHA,
     width: size,
     height: size,
     pixels: array,
@@ -121,7 +123,7 @@ export function isPowerOfTwo(x: number) {
   return (x & (x - 1)) == 0;
 }
 
-function nextHighestPowerOfTwo(x: number) {
+export function nextHighestPowerOfTwo(x: number) {
   --x;
   for (var i = 1; i < 32; i <<= 1) {
     x = x | (x >> i);

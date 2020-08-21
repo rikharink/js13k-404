@@ -7,6 +7,7 @@ import {
   generateNoiseTexture,
   bindVAO,
 } from "../util";
+import { GLConstants } from "../constants";
 
 interface NebulaeOptions {
   offset: [number, number];
@@ -47,16 +48,16 @@ export class NebulaeRenderer {
       this.program,
       "a_position"
     );
-    gl.bindBuffer(gl.ARRAY_BUFFER, this._positionbuffer);
+    gl.bindBuffer(GLConstants.ARRAY_BUFFER, this._positionbuffer);
     gl.bufferData(
-      gl.ARRAY_BUFFER,
+      GLConstants.ARRAY_BUFFER,
       new Float32Array([-1, -1, 1, -1, 1, 1, -1, -1, 1, 1, -1, 1]),
-      gl.STATIC_DRAW
+      GLConstants.STATIC_DRAW
     );
     gl.vertexAttribPointer(
       this._attributePositionLocation,
       2,
-      gl.FLOAT,
+      GLConstants.FLOAT,
       false,
       0,
       0
@@ -65,13 +66,13 @@ export class NebulaeRenderer {
 
     this._uvbuffer = gl.createBuffer()!;
     this._attributeUvLocation = gl.getAttribLocation(this.program, "a_uv");
-    gl.bindBuffer(gl.ARRAY_BUFFER, this._uvbuffer);
+    gl.bindBuffer(GLConstants.ARRAY_BUFFER, this._uvbuffer);
     gl.bufferData(
-      gl.ARRAY_BUFFER,
+      GLConstants.ARRAY_BUFFER,
       new Float32Array([0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1]),
-      gl.STATIC_DRAW
+      GLConstants.STATIC_DRAW
     );
-    gl.vertexAttribPointer(this._attributeUvLocation, 2, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(this._attributeUvLocation, 2, GLConstants.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(this._attributeUvLocation);
 
     this._sourceLocation = gl.getUniformLocation(this.program, "u_source")!;
@@ -97,16 +98,16 @@ export class NebulaeRenderer {
   ): Framebuffer {
     gl.useProgram(this.program);
     bindVAO(gl, this._vao);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, destination.framebuffer);
+    gl.bindFramebuffer(GLConstants.FRAMEBUFFER, destination.framebuffer);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
     const texUnit = 1;
-    gl.activeTexture(gl.TEXTURE0 + texUnit);
-    gl.bindTexture(gl.TEXTURE_2D, source.texture);
+    gl.activeTexture(GLConstants.TEXTURE0 + texUnit);
+    gl.bindTexture(GLConstants.TEXTURE_2D, source.texture);
     gl.uniform1i(this._sourceLocation, texUnit);
 
-    gl.activeTexture(gl.TEXTURE0 + texUnit + 1);
-    gl.bindTexture(gl.TEXTURE_2D, this._noiseTexture);
+    gl.activeTexture(GLConstants.TEXTURE0 + texUnit + 1);
+    gl.bindTexture(GLConstants.TEXTURE_2D, this._noiseTexture);
     gl.uniform1i(this._noiseLocation, texUnit + 1);
 
     gl.uniform1f(this._noiseSizeLocation, this._noiseSize);
@@ -121,7 +122,7 @@ export class NebulaeRenderer {
     );
     gl.uniform1f(this._densityLocation, opts.density);
 
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.drawArrays(GLConstants.TRIANGLES, 0, 6);
     return destination;
   }
 }

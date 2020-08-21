@@ -1,5 +1,6 @@
 import { Framebuffer } from "./framebuffer";
-import { Context } from "./util";
+import { Context, createAndSetupTexture } from "./util";
+import { GLConstants } from "./constants";
 
 export abstract class PingPong {
   protected _ping: Framebuffer;
@@ -51,69 +52,54 @@ export abstract class PingPong {
   }
 
   protected setupFramebuffers(gl: Context): [Framebuffer, Framebuffer] {
-    const pingTexture = gl.createTexture()!;
-    gl.bindTexture(gl.TEXTURE_2D, pingTexture);
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      0,
-      gl.RGB,
-      gl.canvas.width,
-      gl.canvas.height,
-      0,
-      gl.RGB,
-      gl.UNSIGNED_BYTE,
-      null
-    );
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    const pingTexture = createAndSetupTexture(gl, {
+      wrap: GLConstants.CLAMP_TO_EDGE,
+      filter: GLConstants.LINEAR,
+      format: GLConstants.RGBA,
+      width: gl.canvas.width,
+      height: gl.canvas.height,
+      pixels: null
+    });
     const pingFramebuffer = gl.createFramebuffer()!;
-    gl.bindFramebuffer(gl.FRAMEBUFFER, pingFramebuffer);
+    gl.bindFramebuffer(GLConstants.FRAMEBUFFER, pingFramebuffer);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     gl.framebufferTexture2D(
-      gl.FRAMEBUFFER,
-      gl.COLOR_ATTACHMENT0,
-      gl.TEXTURE_2D,
+      GLConstants.FRAMEBUFFER,
+      GLConstants.COLOR_ATTACHMENT0,
+      GLConstants.TEXTURE_2D,
       pingTexture,
       0
     );
+    gl.clear(GLConstants.COLOR_BUFFER_BIT);
     const ping = {
       framebuffer: pingFramebuffer,
       texture: pingTexture,
     };
-
-    const pongTexture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, pongTexture);
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      0,
-      gl.RGB,
-      gl.canvas.width,
-      gl.canvas.height,
-      0,
-      gl.RGB,
-      gl.UNSIGNED_BYTE,
-      null
-    );
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    const pongTexture = createAndSetupTexture(gl, {
+      wrap: GLConstants.CLAMP_TO_EDGE,
+      filter: GLConstants.LINEAR,
+      format: GLConstants.RGBA,
+      width: gl.canvas.width,
+      height: gl.canvas.height,
+      pixels: null
+    });
     const pongFramebuffer = gl.createFramebuffer()!;
-    gl.bindFramebuffer(gl.FRAMEBUFFER, pongFramebuffer);
+    gl.bindFramebuffer(GLConstants.FRAMEBUFFER, pongFramebuffer);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     gl.framebufferTexture2D(
-      gl.FRAMEBUFFER,
-      gl.COLOR_ATTACHMENT0,
-      gl.TEXTURE_2D,
+      GLConstants.FRAMEBUFFER,
+      GLConstants.COLOR_ATTACHMENT0,
+      GLConstants.TEXTURE_2D,
       pongTexture,
       0
     );
+    gl.clear(GLConstants.COLOR_BUFFER_BIT);
     const pong = {
       framebuffer: pongFramebuffer,
       texture: pongTexture,
     };
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.bindFramebuffer(GLConstants.FRAMEBUFFER, null);
     return [ping, pong];
   }
 }

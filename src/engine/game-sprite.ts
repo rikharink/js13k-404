@@ -1,5 +1,6 @@
 import { Context, createVAO, Vao, bindVAO } from "./gl/util";
 import { orthographic, translate, scale, translation } from "./math/m4";
+import { GLConstants } from "./gl/constants";
 
 const dst = new Float32Array(16);
 
@@ -61,29 +62,29 @@ export class GameSprite {
 
   prepare() {
     this.tex = this.gl.createTexture()!;
-    this.gl.bindTexture(this.gl.TEXTURE_2D, this.tex);
+    this.gl.bindTexture(GLConstants.TEXTURE_2D, this.tex);
     this.gl.texImage2D(
-      this.gl.TEXTURE_2D,
+      GLConstants.TEXTURE_2D,
       0,
-      this.gl.RGBA,
-      this.gl.RGBA,
-      this.gl.UNSIGNED_BYTE,
+      GLConstants.RGBA,
+      GLConstants.RGBA,
+      GLConstants.UNSIGNED_BYTE,
       this.img
     );
     this.gl.texParameteri(
-      this.gl.TEXTURE_2D,
-      this.gl.TEXTURE_WRAP_S,
-      this.gl.CLAMP_TO_EDGE
+      GLConstants.TEXTURE_2D,
+      GLConstants.TEXTURE_WRAP_S,
+      GLConstants.CLAMP_TO_EDGE
     );
     this.gl.texParameteri(
-      this.gl.TEXTURE_2D,
-      this.gl.TEXTURE_WRAP_T,
-      this.gl.CLAMP_TO_EDGE
+      GLConstants.TEXTURE_2D,
+      GLConstants.TEXTURE_WRAP_T,
+      GLConstants.CLAMP_TO_EDGE
     );
     this.gl.texParameteri(
-      this.gl.TEXTURE_2D,
-      this.gl.TEXTURE_MIN_FILTER,
-      this.gl.LINEAR
+      GLConstants.TEXTURE_2D,
+      GLConstants.TEXTURE_MIN_FILTER,
+      GLConstants.LINEAR
     );
 
     this.positionAttributeLocation = this.gl.getAttribLocation(
@@ -106,32 +107,32 @@ export class GameSprite {
     )!;
     this.vao = createVAO(this.gl)!;
     this.positionBuffer = this.gl.createBuffer()!;
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
+    this.gl.bindBuffer(GLConstants.ARRAY_BUFFER, this.positionBuffer);
     this.positions = [0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1];
     this.gl.bufferData(
-      this.gl.ARRAY_BUFFER,
+      GLConstants.ARRAY_BUFFER,
       new Float32Array(this.positions),
-      this.gl.STATIC_DRAW
+      GLConstants.STATIC_DRAW
     );
 
     this.texcoordBuffer = this.gl.createBuffer()!;
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.texcoordBuffer);
+    this.gl.bindBuffer(GLConstants.ARRAY_BUFFER, this.texcoordBuffer);
     this.texcoords = [0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1];
     this.gl.bufferData(
-      this.gl.ARRAY_BUFFER,
+      GLConstants.ARRAY_BUFFER,
       new Float32Array(this.texcoords),
-      this.gl.STATIC_DRAW
+      GLConstants.STATIC_DRAW
     );
   }
 
   render(deltaTime: number) {
     // this.animate(deltaTime);
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
+    this.gl.bindBuffer(GLConstants.ARRAY_BUFFER, this.positionBuffer);
     this.gl.enableVertexAttribArray(this.positionAttributeLocation);
     this.gl.vertexAttribPointer(
       this.positionAttributeLocation,
       2,
-      this.gl.FLOAT,
+      GLConstants.FLOAT,
       false,
       0,
       0
@@ -140,7 +141,7 @@ export class GameSprite {
     this.gl.vertexAttribPointer(
       this.texcoordAttributeLocation,
       2,
-      this.gl.FLOAT,
+      GLConstants.FLOAT,
       true,
       0,
       0
@@ -151,8 +152,8 @@ export class GameSprite {
     bindVAO(this.gl, this.vao);
     const textureUnit = 0;
     this.gl.uniform1i(this.textureLocation, textureUnit);
-    this.gl.activeTexture(this.gl.TEXTURE0 + textureUnit);
-    this.gl.bindTexture(this.gl.TEXTURE_2D, this.tex);
+    this.gl.activeTexture(GLConstants.TEXTURE0 + textureUnit);
+    this.gl.bindTexture(GLConstants.TEXTURE_2D, this.tex);
     let canvas = this.gl.canvas as HTMLCanvasElement;
     let matrix = orthographic(
       0,
@@ -182,7 +183,7 @@ export class GameSprite {
       this.tint[2],
       this.tint[3]
     );
-    this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+    this.gl.drawArrays(GLConstants.TRIANGLES, 0, 6);
   }
 
   animate(deltaTime: number) {

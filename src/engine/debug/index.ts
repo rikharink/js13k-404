@@ -1,4 +1,5 @@
 import { Context } from "./../gl/util";
+import { GLConstants } from "../gl/constants";
 
 declare global {
   interface Window {
@@ -43,18 +44,18 @@ export function createImageFromTexture(
 ): HTMLImageElement {
   // Create a framebuffer backed by the texture
   let framebuffer = gl.createFramebuffer();
-  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+  gl.bindFramebuffer(GLConstants.FRAMEBUFFER, framebuffer);
   gl.framebufferTexture2D(
-    gl.FRAMEBUFFER,
-    gl.COLOR_ATTACHMENT0,
-    gl.TEXTURE_2D,
+    GLConstants.FRAMEBUFFER,
+    GLConstants.COLOR_ATTACHMENT0,
+    GLConstants.TEXTURE_2D,
     texture,
     0
   );
 
   // Read the contents of the framebuffer
   let data = new Uint8Array(width * height * 4);
-  gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, data);
+  gl.readPixels(0, 0, width, height, GLConstants.RGBA, GLConstants.UNSIGNED_BYTE, data);
 
   gl.deleteFramebuffer(framebuffer);
 

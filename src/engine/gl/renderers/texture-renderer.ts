@@ -5,6 +5,7 @@ import {
   bindVAO as bindVertexArray,
 } from "../util";
 import { ShaderStore } from "../shaders/shaders";
+import { GLConstants } from "../constants";
 
 interface TextureRendererOpts {}
 
@@ -28,16 +29,16 @@ export class TextureRenderer {
       this.program,
       "inPos"
     );
-    gl.bindBuffer(gl.ARRAY_BUFFER, this._positionbuffer);
+    gl.bindBuffer(GLConstants.ARRAY_BUFFER, this._positionbuffer);
     gl.bufferData(
-      gl.ARRAY_BUFFER,
+      GLConstants.ARRAY_BUFFER,
       new Float32Array([-1, -1, 1, -1, 1, 1, -1, 1]),
-      gl.STATIC_DRAW
+      GLConstants.STATIC_DRAW
     );
     gl.vertexAttribPointer(
       this._attributePositionLocation,
       2,
-      gl.FLOAT,
+      GLConstants.FLOAT,
       false,
       0,
       0
@@ -55,16 +56,16 @@ export class TextureRenderer {
   ) {
     gl.useProgram(this.program);
     bindVertexArray(gl, this._vao);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, destination);
+    gl.bindFramebuffer(GLConstants.FRAMEBUFFER, destination);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
     const texUnit = 1;
-    gl.activeTexture(gl.TEXTURE0 + texUnit);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.activeTexture(GLConstants.TEXTURE0 + texUnit);
+    gl.bindTexture(GLConstants.TEXTURE_2D, texture);
     gl.uniform1i(this._textureLocation, texUnit);
 
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+    gl.bindTexture(GLConstants.TEXTURE_2D, texture);
+    gl.drawArrays(GLConstants.TRIANGLE_FAN, 0, 4);
     bindVertexArray(gl, null);
     return destination;
   }
