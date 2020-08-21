@@ -86,12 +86,19 @@ export class TileMap implements IRenderable {
     this.map = map;
     this.tint = tint;
 
+    this.program = shaders.getShader("tilemap")!;
+    this.vao = createVAO(gl);
+    this.positionLocation = gl.getAttribLocation(this.program, "a_position");
+    this.positionBuffer = gl.createBuffer();
+
+    gl.vertexAttribPointer(this.positionLocation, 2, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
+    gl.enableVertexAttribArray(this.positionLocation);
+
     this.mapWidth = map[0].length;
     this.mapHeight = map.length;
     this.width = this.mapWidth * this.tilesize;
     this.height = this.mapHeight * this.tilesize;
-    this.program = shaders.getShader("tilemap")!;
-    this.positionLocation = gl.getAttribLocation(this.program, "a_position");
     this.matrixLocation = gl.getUniformLocation(this.program, "u_matrix");
     this.texMatrixLocation = gl.getUniformLocation(this.program, "u_texMatrix");
     this.tilemapLocation = gl.getUniformLocation(this.program, "u_tilemap");
@@ -105,8 +112,6 @@ export class TileMap implements IRenderable {
       "u_tilesetSize"
     );
     this.tintLocation = gl.getUniformLocation(this.program, "u_tint");
-    this.vao = createVAO(gl);
-    this.positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
     this.positions = [0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1];
     gl.bufferData(
@@ -129,26 +134,17 @@ export class TileMap implements IRenderable {
         tilemapU8[off + 3] = tile.flags();
         i++;
       }
-      i += this.width - this.mapWidth;
+      i += width - this.mapWidth;
     }
-    const texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      0,
-      gl.RGBA,
-      this.width,
-      this.height,
-      0,
-      gl.RGBA,
-      gl.UNSIGNED_BYTE,
-      tilemapU8
-    );
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-    return texture;
+
+    return createAndSetupTexture(gl, {
+      wrap: gl.REPEAT,
+      filter: gl.NEAREST,
+      format: gl.RGBA,
+      width: width,
+      height: height,
+      pixels: tilemapU8,
+    });
   }
 
   render(
@@ -158,16 +154,13 @@ export class TileMap implements IRenderable {
     scrollX?: number,
     scrollY?: number
   ): void {
-    this.textureRenderer.render(gl, source.texture!, destination);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, destination.framebuffer);
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
-    gl.enableVertexAttribArray(this.positionLocation);
-    gl.vertexAttribPointer(this.positionLocation, 2, gl.FLOAT, false, 0, 0);
-
+    this.textureRenderer.render(gl, source.texture!, destination.framebuffer);
     gl.useProgram(this.program);
     bindVAO(gl, this.vao!);
-    let mat = new Float32Array(16);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, destination.framebuffer);
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+    const mat = new Float32Array(16);
     orthographic(0, gl.canvas.width, gl.canvas.height, 0, -1, 1, mat);
     scale(mat, gl.canvas.width, gl.canvas.height, 1, mat);
 
@@ -198,15 +191,17 @@ export class TileMap implements IRenderable {
       0,
       tmat
     );
+
     gl.uniformMatrix4fv(this.matrixLocation, false, mat);
     gl.uniformMatrix4fv(this.texMatrixLocation, false, tmat);
 
-    gl.uniform1i(this.tilemapLocation, 0);
-    gl.activeTexture(gl.TEXTURE0);
+    const texUnit = 1;
+    gl.uniform1i(this.tilemapLocation, texUnit);
+    gl.activeTexture(gl.TEXTURE0 + texUnit);
     gl.bindTexture(gl.TEXTURE_2D, this.tilemapTexture);
 
-    gl.uniform1i(this.tilesetLocation, 1);
-    gl.activeTexture(gl.TEXTURE1);
+    gl.uniform1i(this.tilesetLocation, texUnit + 1);
+    gl.activeTexture(gl.TEXTURE0 + texUnit + 1);
     gl.bindTexture(gl.TEXTURE_2D, this.tileset);
 
     gl.uniform2f(

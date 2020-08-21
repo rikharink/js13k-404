@@ -12,43 +12,45 @@ import { Starfield } from "./starfield";
 import { setupCanvas } from "./engine/util";
 import { ShaderStore } from "./engine/gl/shaders/shaders";
 import { Random } from "./engine/random";
+import { getTileMap } from "./engine/tile-map";
 
 export class Game {
   private currentScene?: Scene;
   private gl: WebGLRenderingContext;
-  private shaderStore: ShaderStore = new ShaderStore();
+  private shaders: ShaderStore = new ShaderStore();
   private random: Random = new Random("404");
 
   constructor(gl: Context) {
     this.setupShaders(gl);
     this.gl = gl;
-    this.currentScene = new Scene(gl, this.shaderStore, this.random.random);
+    this.currentScene = new Scene(gl, this.shaders, this.random.random);
     this.currentScene.background = new Starfield(
       gl,
-      this.shaderStore,
+      this.shaders,
       2,
       20,
       this.random.random
     );
+    this.currentScene.tilemap = getTileMap(gl, this.shaders);
   }
 
   private setupShaders(gl: Context) {
-    this.shaderStore.addShader(gl, "nebulae", {
+    this.shaders.addShader(gl, "nebulae", {
       vertex: textureVert,
       fragment: nebulaeShader,
     });
 
-    this.shaderStore.addShader(gl, "star", {
+    this.shaders.addShader(gl, "star", {
       vertex: textureVert,
       fragment: starShader,
     });
 
-    this.shaderStore.addShader(gl, "tilemap", {
+    this.shaders.addShader(gl, "tilemap", {
       vertex: tilemapVert,
       fragment: tilemapFrag,
     });
 
-    this.shaderStore.addShader(gl, "fquad", {
+    this.shaders.addShader(gl, "fquad", {
       vertex: fquadVert,
       fragment: fquadFrag,
     });

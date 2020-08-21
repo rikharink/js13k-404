@@ -57,9 +57,7 @@ export class Scene extends PingPong {
       this.resetFramebuffers(gl);
     }
 
-    this._background!.render(gl, this._ping, {
-      framebuffer: null,
-      texture: null,
-    });
+    this._background!.render(gl, this._ping, this._pong);
+    this._tilemap!.render(gl, this._pong, { framebuffer: null, texture: null });
   }
 }
