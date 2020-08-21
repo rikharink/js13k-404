@@ -45,7 +45,7 @@ export class Starfield extends PingPong implements IRenderable {
     this._nebulaeRenderer = new NebulaeRenderer(gl, shaders, rng);
     this._rng = rng;
     this._scale1 = Math.max(gl.canvas.width, gl.canvas.height);
-    this._scale2 = (this._rng() * 2 + 1) / scale;
+    this._scale2 = (this._rng() * 2 + 1) / this._scale1;
     this._offset = [this._rng() * 100, this._rng() * 100];
     this._falloff = this._rng() * 2.0 + 3.0;
     this._color = [this._rng(), this._rng(), this._rng()];
