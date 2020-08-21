@@ -40,8 +40,16 @@ export function createProgram(
   sourceVertex: string,
   sourceFragment: string
 ): WebGLProgram {
-  const vertexShader = createShader(gl, GLConstants.VERTEX_SHADER, sourceVertex);
-  const fragmentShader = createShader(gl, GLConstants.FRAGMENT_SHADER, sourceFragment);
+  const vertexShader = createShader(
+    gl,
+    GLConstants.VERTEX_SHADER,
+    sourceVertex
+  );
+  const fragmentShader = createShader(
+    gl,
+    GLConstants.FRAGMENT_SHADER,
+    sourceFragment
+  );
   const program = gl.createProgram();
   gl.attachShader(program!, vertexShader);
   gl.attachShader(program!, fragmentShader);
@@ -76,10 +84,26 @@ export function createAndSetupTexture(
 ) {
   let texture = gl.createTexture();
   gl.bindTexture(GLConstants.TEXTURE_2D, texture);
-  gl.texParameteri(GLConstants.TEXTURE_2D, GLConstants.TEXTURE_WRAP_S, opts.wrap);
-  gl.texParameteri(GLConstants.TEXTURE_2D, GLConstants.TEXTURE_WRAP_T, opts.wrap);
-  gl.texParameteri(GLConstants.TEXTURE_2D, GLConstants.TEXTURE_MIN_FILTER, opts.filter);
-  gl.texParameteri(GLConstants.TEXTURE_2D, GLConstants.TEXTURE_MAG_FILTER, opts.filter);
+  gl.texParameteri(
+    GLConstants.TEXTURE_2D,
+    GLConstants.TEXTURE_WRAP_S,
+    opts.wrap
+  );
+  gl.texParameteri(
+    GLConstants.TEXTURE_2D,
+    GLConstants.TEXTURE_WRAP_T,
+    opts.wrap
+  );
+  gl.texParameteri(
+    GLConstants.TEXTURE_2D,
+    GLConstants.TEXTURE_MIN_FILTER,
+    opts.filter
+  );
+  gl.texParameteri(
+    GLConstants.TEXTURE_2D,
+    GLConstants.TEXTURE_MAG_FILTER,
+    opts.filter
+  );
   gl.texImage2D(
     GLConstants.TEXTURE_2D,
     0,
@@ -118,6 +142,8 @@ export function generateNoiseTexture(
 
   return texture;
 }
+
+
 
 export function isPowerOfTwo(x: number) {
   return (x & (x - 1)) == 0;

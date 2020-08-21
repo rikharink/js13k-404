@@ -7,7 +7,6 @@ import image from "@rollup/plugin-image";
 import glslify from "rollup-plugin-glslify";
 import inline, { defaultTemplate } from "./plugins/rollup-plugin-html-inline";
 import packageOutput from "./plugins/rollup-plugin-package-js13k";
-
 const env = process.env.NODE_ENV || "development";
 
 let plugins = [
@@ -32,7 +31,9 @@ let plugins = [
     },
     ecma: 8,
     mangle: {
-      properties: false,
+      properties: {
+        regex: /^_/
+      },
     },
   }),
   inline({

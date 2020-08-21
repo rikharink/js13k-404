@@ -2,8 +2,8 @@
 
 ## Must Have
 
+- [ ] [sprite rendering](https://github.com/kutuluk/js13k-2d/tree/master/src)
 - [ ] render tilemap over background
-- [ ] sprite rendering
 - [ ] define simple core gameplay-loop that fits with theme
 - [ ] Integrate pixel-sprite in engine so i easily add & render generated sprites over tilemap
 - [ ] make sprites moveable

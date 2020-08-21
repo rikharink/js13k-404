@@ -6,59 +6,80 @@ import nebulaeShader from "./engine/gl/shaders/nebulae.frag";
 import starShader from "./engine/gl/shaders/star.frag";
 import fquadVert from "./engine/gl/shaders/fquad.vert";
 import fquadFrag from "./engine/gl/shaders/fquad.frag";
+import spriteVert from "./engine/gl/shaders/sprite.vert";
+import spriteFrag from "./engine/gl/shaders/sprite.frag";
 
 import { Context } from "./engine/gl/util";
 import { Starfield } from "./starfield";
 import { setupCanvas } from "./engine/util";
 import { ShaderStore } from "./engine/gl/shaders/shaders";
 import { Random } from "./engine/random";
-import { getTileMap } from "./engine/tile-map";
+import { getTileMap } from "./engine/gl/renderers/tilemap-renderer";
+// import { Dubinator } from "./engine/sound/dubinator";
+
+export const enum Shaders {
+  Nebulae = 0,
+  Star = 1,
+  Tilemap = 2,
+  Fquad = 3,
+  Sprite = 4,
+}
 
 export class Game {
-  private currentScene?: Scene;
-  private gl: WebGLRenderingContext;
-  private shaders: ShaderStore = new ShaderStore();
-  private random: Random = new Random("404");
+  private _currentScene?: Scene;
+  private _gl: WebGLRenderingContext;
+  private _shaders: ShaderStore = new ShaderStore();
+  private _random: Random = new Random("404");
+  // private _actx: AudioContext;
+  // public dubinator: Dubinator;
 
   constructor(gl: Context) {
-    this.setupShaders(gl);
-    this.gl = gl;
-    this.currentScene = new Scene(gl, this.shaders, this.random.random);
-    this.currentScene.background = new Starfield(
+    // this._actx = new AudioContext();
+    // this.dubinator = new Dubinator(this._actx);
+    // this.dubinator.togglePlay();
+    this._setupShaders(gl);
+    this._gl = gl;
+    this._currentScene = new Scene(gl, this._shaders, this._random.random);
+    this._currentScene.background = new Starfield(
       gl,
-      this.shaders,
+      this._shaders,
       2,
       20,
-      this.random.random
+      this._random.random
     );
-    this.currentScene.tilemap = getTileMap(gl, this.shaders);
+    this._currentScene.tilemap = getTileMap(gl, this._shaders);
   }
 
-  private setupShaders(gl: Context) {
-    this.shaders.addShader(gl, "nebulae", {
+  private _setupShaders(gl: Context) {
+    this._shaders.addShader(gl, Shaders.Nebulae, {
       vertex: textureVert,
       fragment: nebulaeShader,
     });
 
-    this.shaders.addShader(gl, "star", {
+    this._shaders.addShader(gl, Shaders.Star, {
       vertex: textureVert,
       fragment: starShader,
     });
 
-    this.shaders.addShader(gl, "tilemap", {
+    this._shaders.addShader(gl, Shaders.Tilemap, {
       vertex: tilemapVert,
       fragment: tilemapFrag,
     });
 
-    this.shaders.addShader(gl, "fquad", {
+    this._shaders.addShader(gl, Shaders.Fquad, {
       vertex: fquadVert,
       fragment: fquadFrag,
+    });
+
+    this._shaders.addShader(gl, Shaders.Sprite, {
+      vertex: spriteVert,
+      fragment: spriteFrag,
     });
   }
 
   public gameloop(now: number) {
     requestAnimationFrame(this.gameloop.bind(this));
-    setupCanvas(this.gl, now);
-    this.currentScene?.render(this.gl, now);
+    setupCanvas(this._gl, now);
+    this._currentScene?.render(this._gl, now);
   }
 }

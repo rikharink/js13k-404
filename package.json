@@ -9,6 +9,7 @@
   "scripts": {
     "start": "cross-env NODE_ENV=development run-s clean watch",
     "watch": "rollup --config rollup.config.js --watch",
+    "dev": "cross-env NODE_ENV=development run-s clean build",
     "clean": "rimraf dist",
     "build": "rollup --config rollup.config.js",
     "dist": "cross-env NODE_ENV=production run-s clean build"

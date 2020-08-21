@@ -1,18 +1,20 @@
 import { IRenderable } from "./renderable";
-import { TileMap } from "./tile-map";
+import { TilemapRenderer } from "./gl/renderers/tilemap-renderer";
 import { Context } from "./gl/util";
 import { PingPong } from "./gl/ping-pong";
 import { TextureRenderer } from "./gl/renderers/texture-renderer";
 import { ShaderStore } from "./gl/shaders/shaders";
+import { SpriteRenderer, Sprite } from "./gl/renderers/sprite-renderer";
+import { Framebuffer } from "./gl/framebuffer";
 
 export class Scene extends PingPong {
   public rng: () => number;
   public gl!: Context;
   public width: number;
   public height: number;
-  private _tilemap?: TileMap;
+  private _tilemap?: TilemapRenderer;
   private _background?: IRenderable;
-  private _sprites: IRenderable[] = [];
+  private _spritesRenderer: SpriteRenderer;
   private _textureRenderer: TextureRenderer;
 
   private _scrollX = 0;
@@ -25,6 +27,7 @@ export class Scene extends PingPong {
     this.rng = rng;
     [this.width, this.height] = [0, 0];
     this._textureRenderer = new TextureRenderer(gl, shaders);
+    this._spritesRenderer = new SpriteRenderer(gl, shaders, false);
   }
 
   public set zoom(value: { x: number; y: number }) {
@@ -35,7 +38,7 @@ export class Scene extends PingPong {
     [this._scrollX, this._scrollY] = [value.x, value.y];
   }
 
-  public set tilemap(tilemap: TileMap) {
+  public set tilemap(tilemap: TilemapRenderer) {
     this._tilemap = tilemap;
   }
 
@@ -43,12 +46,8 @@ export class Scene extends PingPong {
     this._background = background;
   }
 
-  public addSprite(sprite: IRenderable) {
-    this._sprites.push(sprite);
-  }
-
-  public clearSprites() {
-    this._sprites = [];
+  public addSprite(sprite: Sprite) {
+    this._spritesRenderer.add(sprite);
   }
 
   public render(gl: Context, now?: number): void {
@@ -56,7 +55,9 @@ export class Scene extends PingPong {
       [this.width, this.height] = [gl.canvas.width, gl.canvas.height];
       this.resetFramebuffers(gl);
     }
-    // this._background!.render(gl, this._ping, this._pong);
-    this._tilemap!.render(gl, this._ping, { framebuffer: null, texture: null });
+    const display: Framebuffer = { framebuffer: null, texture: null };
+    this._background!.render(gl, this._ping, this._pong);
+    // this._tilemap!.render(gl, this._ping, { framebuffer: null, texture: null });
+    this._spritesRenderer!.render(this._pong, display);
   }
 }

@@ -5,14 +5,16 @@ export interface Shader {
   fragment: string;
 }
 
-export class ShaderStore {
-  private _shaders: Map<string, WebGLProgram> = new Map<string, WebGLProgram>();
+export const enum ShaderType {}
 
-  public addShader(gl: Context, key: string, value: Shader) {
+export class ShaderStore {
+  private _shaders: Map<number, WebGLProgram> = new Map<number, WebGLProgram>();
+
+  public addShader(gl: Context, key: number, value: Shader) {
     this._shaders.set(key, createProgram(gl, value.vertex, value.fragment));
   }
 
-  public getShader(key: string): WebGLProgram | undefined {
+  public getShader(key: number): WebGLProgram | undefined {
     return this._shaders.get(key);
   }
 }

@@ -2,6 +2,7 @@ import { Context, bindVAO, createVAO } from "../util";
 import { Framebuffer } from "../framebuffer";
 import { ShaderStore } from "../shaders/shaders";
 import { GLConstants } from "../constants";
+import { Shaders } from "../../../game";
 
 interface StarRendererOptions {
   coreColor: [number, number, number];
@@ -34,7 +35,7 @@ export class StarRenderer {
   constructor(gl: Context, shaders: ShaderStore) {
     this.width = gl.canvas.width;
     this.height = gl.canvas.height;
-    this.program = shaders.getShader("star")!;
+    this.program = shaders.getShader(Shaders.Star)!;
     this._vao = createVAO(gl)!;
     bindVAO(gl, this._vao);
     this._positionbuffer = gl.createBuffer()!;

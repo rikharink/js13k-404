@@ -8,3 +8,4 @@ const canvas: HTMLCanvasElement = document.getElementById(
 const gl = getContext(canvas);
 const game = new Game(gl);
 requestAnimationFrame(game.gameloop.bind(game));
+window.Dump = game;

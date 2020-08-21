@@ -18,7 +18,7 @@ export class PointstarRenderer {
     this.width = gl.canvas.width;
     this.height = gl.canvas.height;
     this._textureRenderer = new TextureRenderer(gl, shaders);
-    this.texture = this.generatePointStarTexture(gl);
+    this.texture = this._generatePointStarTexture(gl);
   }
 
   render(
@@ -29,7 +29,7 @@ export class PointstarRenderer {
     if (this.width !== gl.canvas.width || this.height !== gl.canvas.height) {
       this.width = gl.canvas.width;
       this.height = gl.canvas.height;
-      this.texture = this.generatePointStarTexture(gl);
+      this.texture = this._generatePointStarTexture(gl);
     }
     gl.bindFramebuffer(GLConstants.FRAMEBUFFER, destination.framebuffer);
     gl.clearColor(1, 1, 0, 1);
@@ -38,14 +38,14 @@ export class PointstarRenderer {
     return destination;
   }
 
-  private generatePointStarTexture(gl: Context): WebGLTexture {
+  private _generatePointStarTexture(gl: Context): WebGLTexture {
     return createAndSetupTexture(gl, {
       wrap: GLConstants.CLAMP_TO_EDGE,
       filter: GLConstants.LINEAR,
       format: GLConstants.RGB,
       width: gl.canvas.width,
       height: gl.canvas.height,
-      pixels: this.generatePointStars(
+      pixels: this._generatePointStars(
         gl.canvas.width,
         gl.canvas.height,
         0.05,
@@ -54,7 +54,7 @@ export class PointstarRenderer {
     });
   }
 
-  private generatePointStars(
+  private _generatePointStars(
     width: number,
     height: number,
     density: number,

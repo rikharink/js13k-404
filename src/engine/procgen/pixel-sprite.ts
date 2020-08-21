@@ -76,7 +76,7 @@ interface SpriteOptions {
   saturation?: number;
 }
 
-export class Sprite {
+export class PixelSprite {
   width: number;
   height: number;
   mask: Mask;

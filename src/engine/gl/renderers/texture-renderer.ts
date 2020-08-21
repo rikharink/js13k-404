@@ -6,6 +6,7 @@ import {
 } from "../util";
 import { ShaderStore } from "../shaders/shaders";
 import { GLConstants } from "../constants";
+import { Shaders } from "../../../game";
 
 interface TextureRendererOpts {}
 
@@ -21,7 +22,7 @@ export class TextureRenderer {
   constructor(gl: Context, shaders: ShaderStore) {
     this.width = gl.canvas.width;
     this.height = gl.canvas.height;
-    this.program = shaders.getShader("fquad")!;
+    this.program = shaders.getShader(Shaders.Fquad)!;
     this._vao = createVAO(gl)!;
     bindVertexArray(gl, this._vao);
     this._positionbuffer = gl.createBuffer()!;

@@ -8,6 +8,7 @@ import {
   bindVAO,
 } from "../util";
 import { GLConstants } from "../constants";
+import { Shaders } from "../../../game";
 
 interface NebulaeOptions {
   offset: [number, number];
@@ -38,7 +39,7 @@ export class NebulaeRenderer {
   private _noiseSizeLocation: WebGLUniformLocation | null;
 
   constructor(gl: Context, shaders: ShaderStore, rng: () => number) {
-    this.program = shaders.getShader("nebulae")!;
+    this.program = shaders.getShader(Shaders.Nebulae)!;
     this.width = gl.canvas.width;
     this.height = gl.canvas.height;
     this._vao = createVAO(gl)!;

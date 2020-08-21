@@ -41,7 +41,7 @@ export class Starfield extends PingPong implements IRenderable {
     
   }
 
-  private draw(gl: Context): void {
+  private _draw(gl: Context): void {
     this.resetFramebuffers(gl);
     this._pointstarRenderer.render(gl, this._ping);
     const scale = Math.max(gl.canvas.width, gl.canvas.height);
@@ -100,7 +100,7 @@ export class Starfield extends PingPong implements IRenderable {
     if (this.width != gl.canvas.width || this.height != gl.canvas.height) {
       this.width = gl.canvas.width;
       this.height = gl.canvas.height;
-      this.draw(gl);
+      this._draw(gl);
     }
     this._textureRenderer.render(
       gl,
