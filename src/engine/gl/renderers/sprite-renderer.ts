@@ -1,114 +1,16 @@
 import { TextureRenderer } from "./texture-renderer";
-import { Context, createVAO, bindVAO } from "./../util";
+import { Context, Vao, createVAO, bindVAO } from "./../util";
 import { ShaderStore } from "./../shaders/shaders";
-import { List, Node } from "../list";
 import { GLConstants } from "../constants";
 import { Shaders } from "../../../game";
 import { Framebuffer } from "../framebuffer";
+import { Layer } from "./layer";
+import { Point } from "./point";
+import { Sprite } from "./sprite";
+import { Frame } from "./frame";
 
 const maxBatch = 65535;
 const depth = 1e5;
-
-class Layer {
-  z: number;
-  o: List;
-  t: List;
-
-  constructor(z: number) {
-    this.z = z;
-    this.o = new List();
-    this.t = new List();
-  }
-
-  add(sprite: Sprite) {
-    sprite.remove();
-    sprite.layer = this;
-    sprite.node = (sprite._alpha !== 1 || sprite.frame.p.a === 0
-      ? this.t
-      : this.o
-    ).add(sprite);
-  }
-}
-
-export class Point {
-  x!: number;
-  y!: number;
-
-  constructor(x?: number, y?: number) {
-    this.set(x, y);
-  }
-
-  set(x?: number, y?: number): Point {
-    this.x = x || 0;
-    this.y = y || (y !== 0 ? this.x : 0);
-    return this;
-  }
-}
-
-interface SpriteProps {
-  frame?: Frame;
-  visible?: boolean;
-  position?: Point;
-  rotation?: number;
-  scale?: Point;
-  tint?: number;
-  alpha?: number;
-  list?: Layer | null;
-  node?: Node | null;
-}
-
-export class Sprite {
-  _alpha: number;
-  frame: Frame;
-  layer: Layer | null = null;
-  node: Node | null;
-  visible: boolean;
-  position: Point;
-  rotation: number;
-  scale: Point;
-  tint: number;
-
-  constructor(
-    frame: Frame,
-    {
-      visible = true,
-      position = new Point(),
-      rotation = 0,
-      scale = new Point(1),
-      tint = 0xffffff,
-      alpha = 1,
-      list = null,
-      node = null,
-    }: SpriteProps
-  ) {
-    this.frame = frame;
-    this.visible = visible;
-    this.position = position;
-    this.rotation = rotation;
-    this.scale = scale;
-    this.tint = tint;
-    this._alpha = alpha;
-    this.layer = list;
-    this.node = node;
-  }
-
-  get alpha() {
-    return this._alpha;
-  }
-
-  set alpha(value) {
-    const change =
-      (value < 1 && this._alpha === 1) || (value === 1 && this._alpha < 1);
-    this._alpha = value;
-    change && this.frame!.p!.a! > 0 && this.layer && this.layer.add(this);
-  }
-
-  remove() {
-    this.node && this.node.r();
-    this.layer = null;
-    this.node = null;
-  }
-}
 
 export class SpriteRenderer {
   _zeroLayer: Layer;
@@ -116,6 +18,7 @@ export class SpriteRenderer {
   _gl: Context;
   _ext: ANGLE_instanced_arrays;
   _program: WebGLProgram;
+  // _vao: Vao;
   private _matrixLocation: WebGLUniformLocation;
   private _textureLocation: WebGLUniformLocation;
   private _alphaTestLocation: WebGLUniformLocation;
@@ -125,8 +28,6 @@ export class SpriteRenderer {
   private _currentFrame: Frame | null;
   private _alphaTestMode: boolean;
   private _blend: GLConstants;
-  private _floatSize: number;
-  private _byteSize: number;
   private _arrayBuffer: ArrayBuffer;
   private _floatView: Float32Array;
   private _uintView: Uint32Array;
@@ -136,16 +37,20 @@ export class SpriteRenderer {
     angle: 0,
   };
   private _textureRenderer: TextureRenderer;
-  private _vao: WebGLVertexArrayObject | null;
+  private _floatSize: number;
+  private _byteSize: number;
+  private _indices: Uint8Array;
+  private _vertices: Float32Array;
 
   constructor(gl: Context, shaders: ShaderStore, alpha: boolean) {
-    this._vao = createVAO(gl);
-    bindVAO(gl, this._vao);
+    bindVAO(gl, null);
     this._textureRenderer = new TextureRenderer(gl, shaders);
     this._zeroLayer = new Layer(0);
     this._layers = [this._zeroLayer];
-    this._floatSize = 2 + 2 + 1 + 2 + 4 + 1 + 1;
+
+    this._floatSize = 13;
     this._byteSize = this._floatSize * 4;
+
     this._arrayBuffer = new ArrayBuffer(maxBatch * this._byteSize);
     this._floatView = new Float32Array(this._arrayBuffer);
     this._uintView = new Uint32Array(this._arrayBuffer);
@@ -153,17 +58,32 @@ export class SpriteRenderer {
     this._gl = gl;
     this._ext = this._gl.getExtension("ANGLE_instanced_arrays")!;
     this._program = shaders.getShader(Shaders.Sprite)!;
+    this._indices = new Uint8Array([0 , 1, 2, 2, 1, 3]);
+    this._vertices = new Float32Array([0, 0, 0, 1, 1, 0, 1, 1])
 
+    this._bindStuff();
+    this._matrixLocation = this._getUniformLocation("m");
+    this._textureLocation = this._getUniformLocation("x");
+    this._alphaTestLocation = this._getUniformLocation("j");
+
+    this._width = this._gl.drawingBufferWidth;
+    this._height = this._gl.drawingBufferHeight;
+    this._count = 0;
+    this._currentFrame = null;
+    this._alphaTestMode = false;
+  }
+
+  private _bindStuff() {
     // indicesBuffer
     this._createBuffer(
       GLConstants.ELEMENT_ARRAY_BUFFER,
-      new Uint8Array([0, 1, 2, 2, 1, 3])
+      this._indices
     );
 
     // vertexBuffer
     this._createBuffer(
       GLConstants.ARRAY_BUFFER,
-      new Float32Array([0, 0, 0, 1, 1, 0, 1, 1])
+      this._vertices
     );
 
     // vertexLocation
@@ -198,24 +118,17 @@ export class SpriteRenderer {
     );
     // zLocation
     this._bindAttrib("z", 1, this._byteSize, 1, 48);
-    this._matrixLocation = this._getUniformLocation("m");
-    this._textureLocation = this._getUniformLocation("x");
-    this._alphaTestLocation = this._getUniformLocation("j");
-
-    this._width = this._gl.drawingBufferWidth;
-    this._height = this._gl.drawingBufferHeight;
-    this._count = 0;
-    this._currentFrame = null;
-    this._alphaTestMode = false;
   }
 
   private _createBuffer(
     type: number,
-    src: ArrayBuffer | ArrayBufferView | null,
+    src: ArrayBuffer | null,
     usage?: number
-  ) {
-    this._gl.bindBuffer(type, this._gl.createBuffer());
+  ): WebGLBuffer {
+    const buffer = this._gl.createBuffer()!;
+    this._gl.bindBuffer(type, buffer);
     this._gl.bufferData(type, src, usage ?? GLConstants.STATIC_DRAW);
+    return buffer;
   }
 
   private _bindAttrib(
@@ -248,13 +161,7 @@ export class SpriteRenderer {
     if (!this._count) {
       return;
     }
-    if (this._alphaTestMode) {
-      this._gl.disable(GLConstants.BLEND);
-    } else {
-      this._gl.enable(GLConstants.BLEND);
-      this._gl.blendFunc(this._blend, GLConstants.ONE_MINUS_SRC_ALPHA);
-    }
-
+    this._bindStuff();
     this._gl.blendFunc(
       this._alphaTestMode ? GLConstants.ONE : this._blend,
       this._alphaTestMode ? GLConstants.ZERO : GLConstants.ONE_MINUS_SRC_ALPHA
@@ -263,11 +170,14 @@ export class SpriteRenderer {
       this._alphaTestMode ? GLConstants.LESS : GLConstants.LEQUAL
     );
 
-    this._gl.bindTexture(GLConstants.TEXTURE_2D, this._currentFrame?.p?.t ?? null);
-    this._gl.uniform1i(this._textureLocation, 0);
+    let texUnit = 0;
+    this._gl.activeTexture(GLConstants.TEXTURE0 + texUnit);
+    this._gl.bindTexture(GLConstants.TEXTURE_2D, this._currentFrame!.p!.t);
+    //@ts-ignore
+    this._gl.uniform1i(this._textureLocation, texUnit);
     this._gl.uniform1f(
       this._alphaTestLocation,
-      this._alphaTestMode ? this._currentFrame?.p?.a ?? 0 : 0
+      this._alphaTestMode ? this._currentFrame!.p!.a! : 0
     );
 
     this._gl.bufferSubData(
@@ -286,18 +196,17 @@ export class SpriteRenderer {
   }
 
   private _draw(sprite: Sprite) {
-    bindVAO(this._gl, this._vao);
     if (!sprite.visible) {
       return;
     }
-    if (this._count === maxBatch) {
+    if (this._count >= maxBatch) {
       return;
     }
     const { frame } = sprite;
     const { uvs } = frame;
 
     if (this._currentFrame?.p.t !== frame.p.t) {
-      if(this._currentFrame?.p.t){
+      if (this._currentFrame?.p.t) {
         this._flush();
       }
       this._currentFrame = frame;
@@ -319,18 +228,23 @@ export class SpriteRenderer {
     this._floatView[i++] = uvs![2];
     this._floatView[i++] = uvs![3];
     this._uintView[i++] =
-      (((sprite.tint & 0xffffff) << 8) | ((sprite._alpha * 255) & 255)) >>> 0;
+      (((sprite.tint & 0xffffff) << 8) | ((sprite.alpha * 255) & 255)) >>> 0;
     this._floatView[i] = sprite.layer!.z;
 
     this._count++;
   }
 
-  render(source: Framebuffer, destination: Framebuffer) {
-    this._textureRenderer.render(
-      this._gl,
-      source.texture!,
-      destination.framebuffer
-    );
+  render(gl: Context, source: Framebuffer, destination: Framebuffer) {
+    if (
+      this._width !== gl.drawingBufferWidth ||
+      this._height !== gl.drawingBufferHeight
+    ) {
+      [this._width, this._height] = [
+        gl.drawingBufferWidth,
+        gl.drawingBufferHeight,
+      ];
+    }
+    this._textureRenderer.render(gl, source.texture!, destination.framebuffer);
     const { at, to, angle } = this.camera;
 
     const x = at.x - this._width * to.x;
@@ -353,16 +267,16 @@ export class SpriteRenderer {
       0, 1,
     ];
 
-    this._gl.useProgram(this._program);
-    this._gl.bindFramebuffer(GLConstants.FRAMEBUFFER, destination.framebuffer);
-    this._gl.enable(GLConstants.BLEND);
-    this._gl.enable(GLConstants.DEPTH_TEST);
-    this._gl.viewport(0, 0, this._width, this._height);
-    this._gl.uniformMatrix4fv(this._matrixLocation, false, projection);
-    // this._gl.clear(GLConstants.COLOR_BUFFER_BIT | GLConstants.DEPTH_BUFFER_BIT);
+    gl.useProgram(this._program);
+    bindVAO(gl, null);
+    gl.bindFramebuffer(GLConstants.FRAMEBUFFER, destination.framebuffer);
+    gl.enable(GLConstants.BLEND);
+    gl.enable(GLConstants.DEPTH_TEST);
+    gl.viewport(0, 0, this._width, this._height);
+    gl.uniformMatrix4fv(this._matrixLocation, false, projection);
     this._currentFrame = null;
     this._alphaTestMode = true;
-    for(let layer of this._layers){
+    for (let layer of this._layers) {
       layer.o.i(this._draw.bind(this));
     }
     this._flush();
@@ -388,31 +302,21 @@ export class SpriteRenderer {
     this._zeroLayer.add(sprite);
   }
 
-  texture(
-    source: TexImageSource,
-    alphaTest: number,
-    smooth?: number,
-    mipmap?: number
-  ) {
+  texture(source: TexImageSource, alphaTest: number) {
     const srcWidth = source.width;
     const srcHeight = source.height;
     const t = this._gl.createTexture()!;
 
     this._gl.bindTexture(GLConstants.TEXTURE_2D, t);
-    // NEAREST || LINEAR
     this._gl.texParameteri(
       GLConstants.TEXTURE_2D,
       GLConstants.TEXTURE_MAG_FILTER,
-      GLConstants.NEAREST | (smooth ?? 0)
+      GLConstants.NEAREST
     );
-    // NEAREST || LINEAR || NEAREST_MIPMAP_LINEAR || LINEAR_MIPMAP_LINEAR
     this._gl.texParameteri(
       GLConstants.TEXTURE_2D,
       GLConstants.TEXTURE_MIN_FILTER,
-      GLConstants.NEAREST |
-        (smooth || 0) |
-        ((mipmap ?? 0) << 8) |
-        ((mipmap || 0) << 1)
+      GLConstants.NEAREST
     );
     this._gl.texImage2D(
       GLConstants.TEXTURE_2D,
@@ -422,54 +326,16 @@ export class SpriteRenderer {
       GLConstants.UNSIGNED_BYTE,
       source
     );
-    mipmap && this._gl.generateMipmap(GLConstants.TEXTURE_2D);
     return new Frame(
       srcWidth,
       srcHeight,
-      new Point(srcWidth, srcHeight), new Point(), [0, 0, 1, 1], {
+      new Point(srcWidth, srcHeight),
+      new Point(),
+      [0, 0, 1, 1],
+      {
         a: alphaTest === 0 ? 0 : alphaTest || 1,
         t,
-      });
-  }
-}
-
-export class Frame {
-  size?: Point;
-  anchor: Point;
-  uvs?: [number, number, number, number];
-  p!: { a?: number; t: WebGLTexture };
-  srcWidth: number;
-  srcHeight: number;
-
-  constructor(
-    srcWidth: number,
-    srcHeight: number,
-    size: Point,
-    anchor: Point,
-    uvs: [number, number, number, number],
-    p: { a?: number; t: WebGLTexture }
-  ) {
-    this.srcWidth = srcWidth;
-    this.srcHeight = srcHeight;
-    this.size = size;
-    this.anchor = anchor;
-    this.uvs = uvs;
-    this.p = p;
-  }
-
-  frame(origin: Point, size: Point, anchor?: Point) {
-    return new Frame(
-      this.srcWidth,
-      this.srcHeight,
-      size,
-      anchor || this.anchor,
-      [
-        origin.x / this.srcWidth,
-        origin.y / this.srcHeight,
-        size.x / this.srcWidth,
-        size.y / this.srcHeight,
-      ],
-      this.p
+      }
     );
   }
 }

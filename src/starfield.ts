@@ -27,7 +27,7 @@ export class Starfield extends PingPong implements IRenderable {
     shaders: ShaderStore,
     nebulaeCount: number,
     starCount: number,
-    rng: Random,
+    rng: Random
   ) {
     super(gl);
     this._nebulaeCount = nebulaeCount;
@@ -72,22 +72,32 @@ export class Starfield extends PingPong implements IRenderable {
         this._starRenderer.render(gl, source, destination, {
           coreColor: [1, 1, 1],
           coreRadius: this._rng.random() * 0.0,
-          haloColor: [this._rng.random(), this._rng.random(), this._rng.random()],
+          haloColor: [
+            this._rng.random(),
+            this._rng.random(),
+            this._rng.random(),
+          ],
           haloFalloff: this._rng.random() * 1024 + 32,
           center: [this._rng.random(), this._rng.random()],
-          resolution: [gl.drawingBufferWidth, gl.drawingBufferHeight],
-          scale:this._scale,
+          resolution: [
+            gl.drawingBufferWidth,
+            gl.drawingBufferHeight,
+          ],
+          scale: this._scale,
         })
     );
 
     let sunOut = starOut === this._ping ? this._pong : this._ping;
     sunOut = this._starRenderer.render(gl, starOut, sunOut, {
       coreColor: [1, 1, 1],
-      coreRadius: this._rng.random() * 0.025 + 0.025,
+      coreRadius: this._rng.random() * 0.25 + 0.0125,
       haloColor: [this._rng.random(), this._rng.random(), this._rng.random()],
-      haloFalloff: this._rng.random() * 32 + 32,
+      haloFalloff: this._rng.random() * 32 + 8,
       center: [this._rng.random(), this._rng.random()],
-      resolution: [gl.drawingBufferWidth, gl.drawingBufferHeight],
+      resolution: [
+        gl.drawingBufferWidth,
+        gl.drawingBufferHeight,
+      ],
       scale: this._scale,
     });
 
@@ -99,7 +109,10 @@ export class Starfield extends PingPong implements IRenderable {
     _source: Framebuffer,
     destination: Framebuffer
   ): void {
-    if (this.width != gl.drawingBufferWidth || this.height != gl.drawingBufferHeight) {
+    if (
+      this.width != gl.drawingBufferWidth ||
+      this.height != gl.drawingBufferHeight
+    ) {
       this.width = gl.drawingBufferWidth;
       this.height = gl.drawingBufferHeight;
       this._draw(gl);
