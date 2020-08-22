@@ -4,11 +4,11 @@ import {
   Context,
   createVAO,
   Vao,
-  generateNoiseTexture,
   bindVAO,
 } from "../util";
 import { GLConstants } from "../constants";
 import { Shaders } from "../../../game";
+import { Random } from "../../random";
 
 interface NebulaeOptions {
   offset: [number, number];
@@ -33,15 +33,11 @@ export class NebulaeRenderer {
   private _falloffLocation: WebGLUniformLocation;
   private _colorLocation: WebGLUniformLocation;
   private _densityLocation: WebGLUniformLocation;
-  private _noiseTexture: WebGLTexture;
-  private _noiseSize: number;
-  private _noiseLocation: WebGLUniformLocation | null;
-  private _noiseSizeLocation: WebGLUniformLocation | null;
 
-  constructor(gl: Context, shaders: ShaderStore, rng: () => number) {
+  constructor(gl: Context, shaders: ShaderStore, rng: Random) {
     this.program = shaders.getShader(Shaders.Nebulae)!;
-    this.width = gl.canvas.width;
-    this.height = gl.canvas.height;
+    this.width = gl.drawingBufferWidth;
+    this.height = gl.drawingBufferHeight;
     this._vao = createVAO(gl)!;
     bindVAO(gl, this._vao);
     this._positionbuffer = gl.createBuffer()!;
@@ -82,13 +78,6 @@ export class NebulaeRenderer {
     this._falloffLocation = gl.getUniformLocation(this.program, "u_falloff")!;
     this._colorLocation = gl.getUniformLocation(this.program, "u_color")!;
     this._densityLocation = gl.getUniformLocation(this.program, "u_density")!;
-    this._noiseLocation = gl.getUniformLocation(this.program, "u_noise");
-    this._noiseSizeLocation = gl.getUniformLocation(
-      this.program,
-      "u_noiseSize"
-    );
-    this._noiseSize = 256;
-    this._noiseTexture = generateNoiseTexture(gl, rng, this._noiseSize);
   }
 
   render(
@@ -100,18 +89,13 @@ export class NebulaeRenderer {
     gl.useProgram(this.program);
     bindVAO(gl, this._vao);
     gl.bindFramebuffer(GLConstants.FRAMEBUFFER, destination.framebuffer);
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
 
     const texUnit = 1;
     gl.activeTexture(GLConstants.TEXTURE0 + texUnit);
     gl.bindTexture(GLConstants.TEXTURE_2D, source.texture);
     gl.uniform1i(this._sourceLocation, texUnit);
 
-    gl.activeTexture(GLConstants.TEXTURE0 + texUnit + 1);
-    gl.bindTexture(GLConstants.TEXTURE_2D, this._noiseTexture);
-    gl.uniform1i(this._noiseLocation, texUnit + 1);
-
-    gl.uniform1f(this._noiseSizeLocation, this._noiseSize);
     gl.uniform2f(this._offsetLocation, opts.offset[0], opts.offset[1]);
     gl.uniform1f(this._scaleLocation, opts.scale);
     gl.uniform1f(this._falloffLocation, opts.falloff);

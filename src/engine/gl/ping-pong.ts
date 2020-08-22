@@ -56,13 +56,13 @@ export abstract class PingPong {
       wrap: GLConstants.CLAMP_TO_EDGE,
       filter: GLConstants.LINEAR,
       format: GLConstants.RGBA,
-      width: gl.canvas.width,
-      height: gl.canvas.height,
+      width: gl.drawingBufferWidth,
+      height: gl.drawingBufferHeight,
       pixels: null
-    });
+    })
     const pingFramebuffer = gl.createFramebuffer()!;
     gl.bindFramebuffer(GLConstants.FRAMEBUFFER, pingFramebuffer);
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     gl.framebufferTexture2D(
       GLConstants.FRAMEBUFFER,
       GLConstants.COLOR_ATTACHMENT0,
@@ -79,13 +79,13 @@ export abstract class PingPong {
       wrap: GLConstants.CLAMP_TO_EDGE,
       filter: GLConstants.LINEAR,
       format: GLConstants.RGBA,
-      width: gl.canvas.width,
-      height: gl.canvas.height,
+      width: gl.drawingBufferWidth,
+      height: gl.drawingBufferHeight,
       pixels: null
     });
     const pongFramebuffer = gl.createFramebuffer()!;
     gl.bindFramebuffer(GLConstants.FRAMEBUFFER, pongFramebuffer);
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     gl.framebufferTexture2D(
       GLConstants.FRAMEBUFFER,
       GLConstants.COLOR_ATTACHMENT0,

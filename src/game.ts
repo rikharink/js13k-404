@@ -29,7 +29,7 @@ export class Game {
   private _currentScene?: Scene;
   private _gl: WebGLRenderingContext;
   private _shaders: ShaderStore = new ShaderStore();
-  private _random: Random = new Random("404");
+  private _random: Random = new Random(`404${Math.random() * 100 | 0}`);
   // private _actx: AudioContext;
   // public dubinator: Dubinator;
 
@@ -39,13 +39,13 @@ export class Game {
     // this.dubinator.togglePlay();
     this._setupShaders(gl);
     this._gl = gl;
-    this._currentScene = new Scene(gl, this._shaders, this._random.random);
+    this._currentScene = new Scene(gl, this._shaders, this._random);
     this._currentScene.background = new Starfield(
       gl,
       this._shaders,
-      2,
-      20,
-      this._random.random
+      3,
+      4,
+      this._random
     );
     this._currentScene.tilemap = getTileMap(gl, this._shaders);
   }
@@ -79,7 +79,9 @@ export class Game {
 
   public gameloop(now: number) {
     requestAnimationFrame(this.gameloop.bind(this));
-    setupCanvas(this._gl, now);
+    if(setupCanvas(this._gl, now)){
+      this._random.reset();
+    }
     this._currentScene?.render(this._gl, now);
   }
 }

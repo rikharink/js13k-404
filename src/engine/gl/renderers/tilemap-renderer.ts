@@ -152,7 +152,7 @@ export class TilemapRenderer {
       }
       i += this.width - this.mapWidth;
     }
-
+    
     return createAndSetupTexture(gl, {
       wrap: GLConstants.REPEAT,
       filter: GLConstants.NEAREST,
@@ -174,18 +174,18 @@ export class TilemapRenderer {
     gl.useProgram(this._program);
     bindVAO(gl, this._vao!);
     gl.bindFramebuffer(GLConstants.FRAMEBUFFER, destination.framebuffer);
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
 
     const mat = new Float32Array(16);
-    orthographic(0, gl.canvas.width, gl.canvas.height, 0, -1, 1, mat);
-    scale(mat, gl.canvas.width, gl.canvas.height, 1, mat);
+    orthographic(0, gl.drawingBufferWidth, gl.drawingBufferHeight, 0, -1, 1, mat);
+    scale(mat, gl.drawingBufferWidth, gl.drawingBufferHeight, 1, mat);
 
     const scaleX = 1;
     const scaleY = 1;
     const dispScaleX = 1;
     const dispScaleY = 1;
-    const originX = gl.canvas.width * 0.5;
-    const originY = gl.canvas.height * 0.5;
+    const originX = gl.drawingBufferWidth * 0.5;
+    const originY = gl.drawingBufferHeight * 0.5;
     scrollX = scrollX || 0;
     scrollY = scrollY || 0;
     const rotation = 0;
@@ -195,15 +195,15 @@ export class TilemapRenderer {
     zRotate(tmat, rotation, tmat);
     scale(
       tmat,
-      (gl.canvas.width / this._tilesize / scaleX) * dispScaleX,
-      (gl.canvas.height / this._tilesize / scaleY) * dispScaleY,
+      (gl.drawingBufferWidth / this._tilesize / scaleX) * dispScaleX,
+      (gl.drawingBufferHeight / this._tilesize / scaleY) * dispScaleY,
       1,
       tmat
     );
     translate(
       tmat,
-      -originX / gl.canvas.width,
-      -originY / gl.canvas.height,
+      -originX / gl.drawingBufferWidth,
+      -originY / gl.drawingBufferHeight,
       0,
       tmat
     );

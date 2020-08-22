@@ -87,7 +87,8 @@ export function randomColor() {
   return [Math.random(), Math.random(), Math.random(), 1];
 }
 
-export function setupCanvas(gl: Context, now: number) {
+export function setupCanvas(gl: Context, now: number): boolean {
+  let resize = false;
   now *= 0.001;
   const deltaTime = now - then;
   then = now;
@@ -95,8 +96,10 @@ export function setupCanvas(gl: Context, now: number) {
     updateDebugInfo(deltaTime, gl);
   }
   if (resizeCanvasToDisplaySize(gl.canvas as HTMLCanvasElement)) {
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    resize = true;
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
   }
   gl.clearColor(0, 0, 0, 0);
   gl.clear(GLConstants.COLOR_BUFFER_BIT | GLConstants.DEPTH_BUFFER_BIT);
+  return resize;
 }

@@ -20,8 +20,8 @@ export class TextureRenderer {
   private _textureLocation: WebGLUniformLocation;
 
   constructor(gl: Context, shaders: ShaderStore) {
-    this.width = gl.canvas.width;
-    this.height = gl.canvas.height;
+    this.width = gl.drawingBufferWidth;
+    this.height = gl.drawingBufferHeight;
     this.program = shaders.getShader(Shaders.Fquad)!;
     this._vao = createVAO(gl)!;
     bindVertexArray(gl, this._vao);
@@ -58,7 +58,7 @@ export class TextureRenderer {
     gl.useProgram(this.program);
     bindVertexArray(gl, this._vao);
     gl.bindFramebuffer(GLConstants.FRAMEBUFFER, destination);
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
 
     const texUnit = 1;
     gl.activeTexture(GLConstants.TEXTURE0 + texUnit);

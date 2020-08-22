@@ -39,6 +39,8 @@
  *
  */
 
+import { Random } from "../random";
+
 const enum MaskData {
   AlwaysBorder = -1,
   Empty = 0,
@@ -77,19 +79,19 @@ interface SpriteOptions {
 }
 
 export class PixelSprite {
-  width: number;
-  height: number;
-  mask: Mask;
-  data: MaskData[];
-  options: SpriteOptions;
   public canvas!: HTMLCanvasElement;
-  ctx!: CanvasRenderingContext2D;
-  pixels: any;
-  rng: () => number;
+  private _width: number;
+  private _height: number;
+  private _mask: Mask;
+  private _data: MaskData[];
+  private _options: SpriteOptions;
+  private _ctx!: CanvasRenderingContext2D;
+  private _pixels?: ImageData;
+  private _rng: Random;
 
   constructor(
     mask: Mask,
-    rng: () => number,
+    rng: Random,
     {
       colored = true,
       edgeBrightness = 0.3,
@@ -98,13 +100,13 @@ export class PixelSprite {
       saturation = 0.5,
     }: SpriteOptions
   ) {
-    this.width = mask.width * (mask.mirrorX ? 2 : 1);
-    this.height = mask.height * (mask.mirrorY ? 2 : 1);
-    this.mask = mask;
-    this.rng = rng;
-    this.data = new Array(this.width * this.height);
+    this._width = mask.width * (mask.mirrorX ? 2 : 1);
+    this._height = mask.height * (mask.mirrorY ? 2 : 1);
+    this._mask = mask;
+    this._rng = rng;
+    this._data = new Array(this._width * this._height);
 
-    this.options = {
+    this._options = {
       colored,
       edgeBrightness,
       colorVariations,
@@ -112,76 +114,76 @@ export class PixelSprite {
       saturation,
     };
 
-    this.init();
+    this._init();
   }
 
-  init() {
-    this.initCanvas();
-    this.initContext();
-    this.initData();
+  private _init() {
+    this._initCanvas();
+    this._initContext();
+    this._initData();
 
-    this.applyMask();
-    this.generateRandomSample();
+    this._applyMask();
+    this._generateRandomSample();
 
-    if (this.mask.mirrorX) {
-      this.mirrorX();
+    if (this._mask.mirrorX) {
+      this._mirrorX();
     }
 
-    if (this.mask.mirrorY) {
-      this.mirrorY();
+    if (this._mask.mirrorY) {
+      this._mirrorY();
     }
 
-    this.generateEdges();
-    this.renderPixelData();
+    this._generateEdges();
+    this._renderPixelData();
   }
 
-  initCanvas() {
+  _initCanvas() {
     this.canvas = document.createElement("canvas");
-    this.canvas.width = this.width;
-    this.canvas.height = this.height;
+    this.canvas.width = this._width;
+    this.canvas.height = this._height;
   }
 
-  initContext() {
-    this.ctx = this.canvas.getContext("2d")!;
-    this.pixels = this.ctx.createImageData(this.width, this.height);
+  _initContext() {
+    this._ctx = this.canvas.getContext("2d")!;
+    this._pixels = this._ctx.createImageData(this._width, this._height);
   }
 
   getData(x: number, y: number) {
-    return this.data[y * this.width + x];
+    return this._data[y * this._width + x];
   }
 
   setData(x: number, y: number, value: MaskData) {
-    this.data[y * this.width + x] = value;
+    this._data[y * this._width + x] = value;
   }
 
-  initData() {
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < this.width; x++) {
+  _initData() {
+    for (let y = 0; y < this._height; y++) {
+      for (let x = 0; x < this._width; x++) {
         this.setData(x, y, -1);
       }
     }
   }
 
-  applyMask() {
-    const w = this.mask.width;
-    for (let y = 0; y < this.mask.height; y++) {
+  _applyMask() {
+    const w = this._mask.width;
+    for (let y = 0; y < this._mask.height; y++) {
       for (let x = 0; x < w; x++) {
-        this.setData(x, y, this.mask.data[y * w + x]);
+        this.setData(x, y, this._mask.data[y * w + x]);
       }
     }
   }
 
-  generateRandomSample() {
-    const h = this.height;
-    const w = this.width;
+  _generateRandomSample() {
+    const h = this._height;
+    const w = this._width;
 
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
         const val = this.getData(x, y);
         if (val === MaskData.EmptyBody) {
-          this.setData(x, y, val * Math.round(this.rng()));
+          this.setData(x, y, val * Math.round(this._rng.random()));
         } else if (val === MaskData.BorderBody) {
-          if (this.rng() > 0.5) {
+          if (this._rng.random() > 0.5) {
             this.setData(x, y, 1);
           } else {
             this.setData(x, y, -1);
@@ -191,36 +193,36 @@ export class PixelSprite {
     }
   }
 
-  mirrorX() {
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < Math.floor(this.width / 2); x++) {
-        this.setData(this.width - x - 1, y, this.getData(x, y));
+  _mirrorX() {
+    for (let y = 0; y < this._height; y++) {
+      for (let x = 0; x < Math.floor(this._width / 2); x++) {
+        this.setData(this._width - x - 1, y, this.getData(x, y));
       }
     }
   }
 
-  mirrorY() {
-    for (let y = 0; y < Math.floor(this.height / 2); y++) {
-      for (let x = 0; x < this.width; x++) {
-        this.setData(x, this.height - y - 1, this.getData(x, y));
+  _mirrorY() {
+    for (let y = 0; y < Math.floor(this._height / 2); y++) {
+      for (let x = 0; x < this._width; x++) {
+        this.setData(x, this._height - y - 1, this.getData(x, y));
       }
     }
   }
 
-  generateEdges() {
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < this.width; x++) {
+  _generateEdges() {
+    for (let y = 0; y < this._height; y++) {
+      for (let x = 0; x < this._width; x++) {
         if (this.getData(x, y) > 0) {
           if (y - 1 >= 0 && this.getData(x, y - 1) === 0) {
             this.setData(x, y - 1, -1);
           }
-          if (y + 1 < this.height && this.getData(x, y + 1) === 0) {
+          if (y + 1 < this._height && this.getData(x, y + 1) === 0) {
             this.setData(x, y + 1, -1);
           }
           if (x - 1 >= 0 && this.getData(x - 1, y) === 0) {
             this.setData(x - 1, y, -1);
           }
-          if (x + 1 < this.width && this.getData(x + 1, y) === 0) {
+          if (x + 1 < this._width && this.getData(x + 1, y) === 0) {
             this.setData(x + 1, y, -1);
           }
         }
@@ -228,35 +230,35 @@ export class PixelSprite {
     }
   }
 
-  renderPixelData() {
-    const isVerticalGradient = this.rng() > 0.5;
+  _renderPixelData() {
+    const isVerticalGradient = this._rng.random() > 0.5;
     const saturation = Math.max(
-      Math.min(this.rng() * this.options.saturation!, 1),
+      Math.min(this._rng.random() * this._options.saturation!, 1),
       0
     );
-    let hue = this.rng();
+    let hue = this._rng.random();
     let ulen, vlen;
     if (isVerticalGradient) {
-      ulen = this.height;
-      vlen = this.width;
+      ulen = this._height;
+      vlen = this._width;
     } else {
-      ulen = this.width;
-      vlen = this.height;
+      ulen = this._width;
+      vlen = this._height;
     }
 
     for (let u = 0; u < ulen; u++) {
       // Create a non-uniform random number between 0 and 1 (lower numbers more likely)
       let isNewColor = Math.abs(
-        (this.rng() * 2 -
+        (this._rng.random() * 2 -
           1 +
-          (this.rng() * 2 - 1) +
-          (this.rng() * 2 - 1)) /
+          (this._rng.random() * 2 - 1) +
+          (this._rng.random() * 2 - 1)) /
           3
       );
 
       // Only change the color sometimes (values above 0.8 are less likely than others)
-      if (isNewColor > 1 - this.options.colorVariations!) {
-        hue = this.rng();
+      if (isNewColor > 1 - this._options.colorVariations!) {
+        hue = this._rng.random();
       }
 
       for (let v = 0; v < vlen; v++) {
@@ -272,21 +274,21 @@ export class PixelSprite {
         let rgb = { r: 1, g: 1, b: 1 };
 
         if (val !== 0) {
-          if (this.options.colored) {
+          if (this._options.colored) {
             // Fade brightness away towards the edges
             let brightness =
               Math.sin((u / ulen) * Math.PI) *
-                (1 - this.options.brightnessNoise!) +
-              this.rng() * this.options.brightnessNoise!;
+                (1 - this._options.brightnessNoise!) +
+              this._rng.random() * this._options.brightnessNoise!;
 
             // Get the RGB color value
             this.hslToRgb(hue, saturation, brightness, rgb);
 
             // If this is an edge, then darken the pixel
             if (val === -1) {
-              rgb.r *= this.options.edgeBrightness!;
-              rgb.g *= this.options.edgeBrightness!;
-              rgb.b *= this.options.edgeBrightness!;
+              rgb.r *= this._options.edgeBrightness!;
+              rgb.g *= this._options.edgeBrightness!;
+              rgb.b *= this._options.edgeBrightness!;
             }
           } else {
             // Not colored, simply output black
@@ -298,14 +300,14 @@ export class PixelSprite {
           }
         }
 
-        this.pixels.data[index + 0] = rgb.r * 255;
-        this.pixels.data[index + 1] = rgb.g * 255;
-        this.pixels.data[index + 2] = rgb.b * 255;
-        this.pixels.data[index + 3] = 255;
+        this._pixels!.data[index + 0] = rgb.r * 255;
+        this._pixels!.data[index + 1] = rgb.g * 255;
+        this._pixels!.data[index + 2] = rgb.b * 255;
+        this._pixels!.data[index + 3] = 255;
       }
     }
 
-    this.ctx.putImageData(this.pixels, 0, 0);
+    this._ctx.putImageData(this._pixels!, 0, 0);
   }
 
   hslToRgb(
@@ -348,8 +350,8 @@ export class PixelSprite {
 
   toString() {
     let output = "";
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < this.width; x++) {
+    for (let y = 0; y < this._height; y++) {
+      for (let x = 0; x < this._width; x++) {
         var val = this.getData(x, y);
         output += val >= 0 ? " " + val : "" + val;
       }

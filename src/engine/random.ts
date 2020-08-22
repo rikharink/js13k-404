@@ -14,6 +14,10 @@ export class Random {
     );
   }
 
+  public reset(){
+    this.seed = this._seedString;
+  }
+
   public get seed() {
     return this._seedString;
   }

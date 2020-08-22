@@ -1,5 +1,5 @@
 import { TextureRenderer } from "./texture-renderer";
-import { Context } from "./../util";
+import { Context, createVAO, bindVAO } from "./../util";
 import { ShaderStore } from "./../shaders/shaders";
 import { List, Node } from "../list";
 import { GLConstants } from "../constants";
@@ -8,7 +8,6 @@ import { Framebuffer } from "../framebuffer";
 
 const maxBatch = 65535;
 const depth = 1e5;
-const nullFrame = { p: { t: 0 } };
 
 class Layer {
   z: number;
@@ -31,7 +30,7 @@ class Layer {
   }
 }
 
-class Point {
+export class Point {
   x!: number;
   y!: number;
 
@@ -47,15 +46,15 @@ class Point {
 }
 
 interface SpriteProps {
-  frame: Frame;
-  visible: boolean;
-  position: Point;
-  rotation: number;
-  scale: Point;
-  tint: number;
-  alpha: number;
-  list: Layer | null;
-  node: Node | null;
+  frame?: Frame;
+  visible?: boolean;
+  position?: Point;
+  rotation?: number;
+  scale?: Point;
+  tint?: number;
+  alpha?: number;
+  list?: Layer | null;
+  node?: Node | null;
 }
 
 export class Sprite {
@@ -131,14 +130,17 @@ export class SpriteRenderer {
   private _arrayBuffer: ArrayBuffer;
   private _floatView: Float32Array;
   private _uintView: Uint32Array;
-  private _camera = {
+  public camera = {
     at: new Point(),
     to: new Point(),
     angle: 0,
   };
   private _textureRenderer: TextureRenderer;
+  private _vao: WebGLVertexArrayObject | null;
 
   constructor(gl: Context, shaders: ShaderStore, alpha: boolean) {
+    this._vao = createVAO(gl);
+    bindVAO(gl, this._vao);
     this._textureRenderer = new TextureRenderer(gl, shaders);
     this._zeroLayer = new Layer(0);
     this._layers = [this._zeroLayer];
@@ -200,8 +202,8 @@ export class SpriteRenderer {
     this._textureLocation = this._getUniformLocation("x");
     this._alphaTestLocation = this._getUniformLocation("j");
 
-    this._width = this._gl.canvas.width;
-    this._height = this._gl.canvas.height;
+    this._width = this._gl.drawingBufferWidth;
+    this._height = this._gl.drawingBufferHeight;
     this._count = 0;
     this._currentFrame = null;
     this._alphaTestMode = false;
@@ -261,11 +263,11 @@ export class SpriteRenderer {
       this._alphaTestMode ? GLConstants.LESS : GLConstants.LEQUAL
     );
 
-    this._gl.bindTexture(GLConstants.TEXTURE_2D, this._currentFrame!.p!.t);
+    this._gl.bindTexture(GLConstants.TEXTURE_2D, this._currentFrame?.p?.t ?? null);
     this._gl.uniform1i(this._textureLocation, 0);
     this._gl.uniform1f(
       this._alphaTestLocation,
-      this._alphaTestMode ? this._currentFrame!.p!.a! : 0
+      this._alphaTestMode ? this._currentFrame?.p?.a ?? 0 : 0
     );
 
     this._gl.bufferSubData(
@@ -284,6 +286,7 @@ export class SpriteRenderer {
   }
 
   private _draw(sprite: Sprite) {
+    bindVAO(this._gl, this._vao);
     if (!sprite.visible) {
       return;
     }
@@ -293,8 +296,10 @@ export class SpriteRenderer {
     const { frame } = sprite;
     const { uvs } = frame;
 
-    if (this._currentFrame!.p.t !== frame.p.t) {
-      this._currentFrame!.p.t && this._flush();
+    if (this._currentFrame?.p.t !== frame.p.t) {
+      if(this._currentFrame?.p.t){
+        this._flush();
+      }
       this._currentFrame = frame;
     }
     let i = this._count * this._floatSize;
@@ -326,7 +331,7 @@ export class SpriteRenderer {
       source.texture!,
       destination.framebuffer
     );
-    const { at, to, angle } = this._camera;
+    const { at, to, angle } = this.camera;
 
     const x = at.x - this._width * to.x;
     const y = at.y - this._height * to.y;
@@ -348,7 +353,6 @@ export class SpriteRenderer {
       0, 1,
     ];
 
-    
     this._gl.useProgram(this._program);
     this._gl.bindFramebuffer(GLConstants.FRAMEBUFFER, destination.framebuffer);
     this._gl.enable(GLConstants.BLEND);
@@ -356,14 +360,16 @@ export class SpriteRenderer {
     this._gl.viewport(0, 0, this._width, this._height);
     this._gl.uniformMatrix4fv(this._matrixLocation, false, projection);
     // this._gl.clear(GLConstants.COLOR_BUFFER_BIT | GLConstants.DEPTH_BUFFER_BIT);
-    this._currentFrame = nullFrame;
+    this._currentFrame = null;
     this._alphaTestMode = true;
-    this._layers.forEach((layer) => layer.o.i(this._draw));
+    for(let layer of this._layers){
+      layer.o.i(this._draw.bind(this));
+    }
     this._flush();
 
     this._alphaTestMode = false;
     for (let l = this._layers.length - 1; l >= 0; l--) {
-      this._layers[l].t.i(this._draw);
+      this._layers[l].t.i(this._draw.bind(this));
     }
     this._flush();
   }
@@ -385,8 +391,8 @@ export class SpriteRenderer {
   texture(
     source: TexImageSource,
     alphaTest: number,
-    smooth: boolean,
-    mipmap: boolean
+    smooth?: number,
+    mipmap?: number
   ) {
     const srcWidth = source.width;
     const srcHeight = source.height;
@@ -397,13 +403,16 @@ export class SpriteRenderer {
     this._gl.texParameteri(
       GLConstants.TEXTURE_2D,
       GLConstants.TEXTURE_MAG_FILTER,
-      GLConstants.NEAREST | +smooth
+      GLConstants.NEAREST | (smooth ?? 0)
     );
     // NEAREST || LINEAR || NEAREST_MIPMAP_LINEAR || LINEAR_MIPMAP_LINEAR
     this._gl.texParameteri(
       GLConstants.TEXTURE_2D,
       GLConstants.TEXTURE_MIN_FILTER,
-      GLConstants.NEAREST | +smooth | (+mipmap << 8) | (+mipmap << 1)
+      GLConstants.NEAREST |
+        (smooth || 0) |
+        ((mipmap ?? 0) << 8) |
+        ((mipmap || 0) << 1)
     );
     this._gl.texImage2D(
       GLConstants.TEXTURE_2D,
@@ -414,35 +423,53 @@ export class SpriteRenderer {
       source
     );
     mipmap && this._gl.generateMipmap(GLConstants.TEXTURE_2D);
-
-    return {
-      size: new Point(srcWidth, srcHeight),
-      anchor: new Point(),
-      uvs: [0, 0, 1, 1],
-      p: {
+    return new Frame(
+      srcWidth,
+      srcHeight,
+      new Point(srcWidth, srcHeight), new Point(), [0, 0, 1, 1], {
         a: alphaTest === 0 ? 0 : alphaTest || 1,
         t,
-      },
-      frame(origin: Point, size: Point, anchor?: Point): Frame {
-        return {
-          size,
-          anchor: anchor || this.anchor,
-          uvs: [
-            origin.x / srcWidth,
-            origin.y / srcHeight,
-            size.x / srcWidth,
-            size.y / srcHeight,
-          ],
-          p: this.p,
-        };
-      },
-    };
+      });
   }
 }
 
-interface Frame {
+export class Frame {
   size?: Point;
-  anchor?: Point;
+  anchor: Point;
   uvs?: [number, number, number, number];
-  p: { a?: number; t: WebGLTexture };
+  p!: { a?: number; t: WebGLTexture };
+  srcWidth: number;
+  srcHeight: number;
+
+  constructor(
+    srcWidth: number,
+    srcHeight: number,
+    size: Point,
+    anchor: Point,
+    uvs: [number, number, number, number],
+    p: { a?: number; t: WebGLTexture }
+  ) {
+    this.srcWidth = srcWidth;
+    this.srcHeight = srcHeight;
+    this.size = size;
+    this.anchor = anchor;
+    this.uvs = uvs;
+    this.p = p;
+  }
+
+  frame(origin: Point, size: Point, anchor?: Point) {
+    return new Frame(
+      this.srcWidth,
+      this.srcHeight,
+      size,
+      anchor || this.anchor,
+      [
+        origin.x / this.srcWidth,
+        origin.y / this.srcHeight,
+        size.x / this.srcWidth,
+        size.y / this.srcHeight,
+      ],
+      this.p
+    );
+  }
 }

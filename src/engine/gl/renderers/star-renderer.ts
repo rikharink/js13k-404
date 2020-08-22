@@ -33,8 +33,8 @@ export class StarRenderer {
   private _scaleLocation: WebGLUniformLocation;
 
   constructor(gl: Context, shaders: ShaderStore) {
-    this.width = gl.canvas.width;
-    this.height = gl.canvas.height;
+    this.width = gl.drawingBufferWidth;
+    this.height = gl.drawingBufferHeight;
     this.program = shaders.getShader(Shaders.Star)!;
     this._vao = createVAO(gl)!;
     bindVAO(gl, this._vao);
@@ -104,7 +104,7 @@ export class StarRenderer {
     gl.useProgram(this.program);
     bindVAO(gl, this._vao);
     gl.bindFramebuffer(GLConstants.FRAMEBUFFER, destination.framebuffer);
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
 
     const texUnit = 1;
     gl.activeTexture(GLConstants.TEXTURE0 + texUnit);

@@ -79,7 +79,7 @@ export function createAndSetupTexture(
     format: number;
     width: number;
     height: number;
-    pixels: ArrayBufferView | null;
+    pixels: ArrayBufferView | Uint8Array | null;
   }
 ) {
   let texture = gl.createTexture();
@@ -117,33 +117,6 @@ export function createAndSetupTexture(
   );
   return texture!;
 }
-
-export function generateNoiseTexture(
-  gl: Context,
-  rng: () => number,
-  size: number
-) {
-  let l = size * size * 2;
-  let array = new Uint8Array(l);
-  for (let i = 0; i < l; i++) {
-    let rand = rng() * 2.0 * Math.PI;
-    let r = [Math.cos(rand), Math.sin(rand)];
-    array[i * 2 + 0] = Math.round(0.5 * (1.0 + r[0]) * 255);
-    array[i * 2 + 1] = Math.round(0.5 * (1.0 + r[1]) * 255);
-  }
-  let texture = createAndSetupTexture(gl, {
-    wrap: GLConstants.REPEAT,
-    filter: GLConstants.LINEAR,
-    format: GLConstants.LUMINANCE_ALPHA,
-    width: size,
-    height: size,
-    pixels: array,
-  });
-
-  return texture;
-}
-
-
 
 export function isPowerOfTwo(x: number) {
   return (x & (x - 1)) == 0;

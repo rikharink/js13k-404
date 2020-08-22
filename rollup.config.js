@@ -30,6 +30,7 @@ let plugins = [
       unsafe_math: true,
     },
     ecma: 8,
+    // mangle: false,
     mangle: {
       properties: {
         regex: /^_/

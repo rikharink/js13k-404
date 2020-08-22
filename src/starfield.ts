@@ -7,8 +7,7 @@ import { ShaderStore } from "./engine/gl/shaders/shaders";
 import { PointstarRenderer } from "./engine/gl/renderers/pointstar-renderer";
 import { StarRenderer } from "./engine/gl/renderers/star-renderer";
 import { NebulaeRenderer } from "./engine/gl/renderers/nebulae-renderer";
-import { createImageFromTexture } from "./engine/debug/index";
-
+import { Random } from "./engine/random";
 export class Starfield extends PingPong implements IRenderable {
   public gl!: Context;
   public width: number = 0;
@@ -20,36 +19,29 @@ export class Starfield extends PingPong implements IRenderable {
   private _pointstarRenderer: PointstarRenderer;
   private _starRenderer: StarRenderer;
   private _nebulaeRenderer: NebulaeRenderer;
-  private _rng: () => number;
-  private _offset: [number, number];
-  private _falloff: number;
-  private _scale2: number;
-  private _color: [number, number, number];
-  private _density: number;
-  private _scale1: number;
+  private _rng: Random;
+  private _scale: number;
 
   constructor(
     gl: Context,
     shaders: ShaderStore,
     nebulaeCount: number,
     starCount: number,
-    rng: () => number
+    rng: Random,
   ) {
     super(gl);
     this._nebulaeCount = nebulaeCount;
     this._starCount = starCount;
 
     this._textureRenderer = new TextureRenderer(gl, shaders);
-    this._pointstarRenderer = new PointstarRenderer(gl, shaders, rng);
+    this._pointstarRenderer = new PointstarRenderer(gl, shaders, rng, {
+      brightness: rng.random() * 0.2 + 0.125,
+      density: rng.random() * 0.1 + 0.005,
+    });
     this._starRenderer = new StarRenderer(gl, shaders);
     this._nebulaeRenderer = new NebulaeRenderer(gl, shaders, rng);
     this._rng = rng;
-    this._scale1 = Math.max(gl.canvas.width, gl.canvas.height);
-    this._scale2 = (this._rng() * 2 + 1) / this._scale1;
-    this._offset = [this._rng() * 100, this._rng() * 100];
-    this._falloff = this._rng() * 2.0 + 3.0;
-    this._color = [this._rng(), this._rng(), this._rng()];
-    this._density = this._rng() * 0.2;
+    this._scale = Math.max(gl.drawingBufferWidth, gl.drawingBufferHeight);
   }
 
   private _draw(gl: Context): void {
@@ -63,11 +55,11 @@ export class Starfield extends PingPong implements IRenderable {
       this._nebulaeCount,
       (source: Framebuffer, destination: Framebuffer) =>
         this._nebulaeRenderer.render(gl, source, destination, {
-          offset: this._offset,
-          scale: this._scale2,
-          falloff:this._falloff ,
-          color: this._color,
-          density: this._density,
+          offset: [this._rng.random() * 500, this._rng.random() * 500],
+          scale: (this._rng.random() * 0.4 + 0.1) / this._scale,
+          falloff: this._rng.random() * 6.0 + 0.5,
+          color: [this._rng.random(), this._rng.random(), this._rng.random()],
+          density: this._rng.random() * 0.25,
         })
     );
 
@@ -79,24 +71,24 @@ export class Starfield extends PingPong implements IRenderable {
       (source: Framebuffer, destination: Framebuffer) =>
         this._starRenderer.render(gl, source, destination, {
           coreColor: [1, 1, 1],
-          coreRadius: this._rng() * 0.0,
-          haloColor: [this._rng(), this._rng(), this._rng()],
-          haloFalloff: this._rng() * 1024 + 32,
-          center: [this._rng(), this._rng()],
-          resolution: [gl.canvas.width, gl.canvas.height],
-          scale:this._scale1,
+          coreRadius: this._rng.random() * 0.0,
+          haloColor: [this._rng.random(), this._rng.random(), this._rng.random()],
+          haloFalloff: this._rng.random() * 1024 + 32,
+          center: [this._rng.random(), this._rng.random()],
+          resolution: [gl.drawingBufferWidth, gl.drawingBufferHeight],
+          scale:this._scale,
         })
     );
 
     let sunOut = starOut === this._ping ? this._pong : this._ping;
     sunOut = this._starRenderer.render(gl, starOut, sunOut, {
       coreColor: [1, 1, 1],
-      coreRadius: this._rng() * 0.025 + 0.025,
-      haloColor: [this._rng(), this._rng(), this._rng()],
-      haloFalloff: this._rng() * 32 + 32,
-      center: [this._rng(), this._rng()],
-      resolution: [gl.canvas.width, gl.canvas.height],
-      scale: this._scale1,
+      coreRadius: this._rng.random() * 0.025 + 0.025,
+      haloColor: [this._rng.random(), this._rng.random(), this._rng.random()],
+      haloFalloff: this._rng.random() * 32 + 32,
+      center: [this._rng.random(), this._rng.random()],
+      resolution: [gl.drawingBufferWidth, gl.drawingBufferHeight],
+      scale: this._scale,
     });
 
     this._resultTexture = sunOut.texture!;
@@ -107,9 +99,9 @@ export class Starfield extends PingPong implements IRenderable {
     _source: Framebuffer,
     destination: Framebuffer
   ): void {
-    if (this.width != gl.canvas.width || this.height != gl.canvas.height) {
-      this.width = gl.canvas.width;
-      this.height = gl.canvas.height;
+    if (this.width != gl.drawingBufferWidth || this.height != gl.drawingBufferHeight) {
+      this.width = gl.drawingBufferWidth;
+      this.height = gl.drawingBufferHeight;
       this._draw(gl);
     }
     this._textureRenderer.render(

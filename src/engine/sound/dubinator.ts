@@ -4,6 +4,7 @@ import {
   whiteNoise,
   distortionCurve,
 } from "./util";
+import { Random } from "../random";
 
 export const enum Scale {
   CMinor = 0,
@@ -19,7 +20,7 @@ export interface DubinatorOptions {
   bpm: number;
   gain: number;
   scale: Scale;
-  rng: () => number;
+  rng: Random;
 }
 
 export interface InstrumentOptions {
@@ -227,7 +228,7 @@ export class Dubinator {
   private _stab: Instrument<StabOptions>;
   private _noise: Instrument<NoiseOptions>;
   private _scale: Scale;
-  private _rng: () => number;
+  private _rng: Random;
   private _timerID?: number;
   public ctx: SoundContext;
 
@@ -239,7 +240,7 @@ export class Dubinator {
     this.ctx = ctx;
     this._bpm = opts?.bpm ?? 120;
     this._secondsPerBeat = 60 / (this._bpm * 4);
-    this._rng = opts?.rng ?? Math.random;
+    this._rng = opts?.rng ?? new Random("404");
     this._gain = opts?.gain ?? 1;
     this._volume = ctx.createGain();
     this._volume.gain.setValueAtTime(this._gain, ctx.currentTime);
