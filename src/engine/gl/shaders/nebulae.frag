@@ -18,7 +18,7 @@ float fbm(vec2 p)
   {
     res += amp * normalnoise( p * fre );
     div += amp;
-    amp *= 0.7;\
+    amp *= 0.7;
     fre *= 1.7;
   }
   res /= div;

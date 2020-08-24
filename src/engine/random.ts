@@ -14,12 +14,34 @@ export class Random {
     );
   }
 
-  public reset(){
+  public rand(min: number, max?: number): number {
+    if (!max) {
+      max = min;
+      min = 0;
+    }
+    return this.random() * (max - min) + min;
+  }
+
+  public randInt(min: number, max?: number): number {
+    if (!max) {
+      max = min;
+      min = 0;
+    }
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(this.random() * (max - min + 1)) + min;
+  }
+
+  public reset() {
     this.seed = this._seedString;
   }
 
   public get seed() {
     return this._seedString;
+  }
+
+  public get seedNumber(){
+    return this._seed;
   }
 
   constructor(seed: string) {

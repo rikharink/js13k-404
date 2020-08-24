@@ -19,10 +19,12 @@ export class PointstarRenderer {
   private _density: number;
   private _brightness: number;
 
-  constructor(gl: Context, shaders: ShaderStore, rng: Random, {
-    density = 0.05,
-    brightness = 0.125,
-  }: PointstarOptions) {
+  constructor(
+    gl: Context,
+    shaders: ShaderStore,
+    rng: Random,
+    { density = 0.05, brightness = 0.125 }: PointstarOptions
+  ) {
     this._rng = rng;
     this._width = gl.drawingBufferWidth;
     this._height = gl.drawingBufferHeight;
@@ -32,11 +34,11 @@ export class PointstarRenderer {
     this._texture = this._generatePointStarTexture(gl);
   }
 
-  render(
-    gl: WebGLRenderingContext,
-    destination: Framebuffer
-  ): Framebuffer {
-    if (this._width !== gl.drawingBufferWidth || this._height !== gl.drawingBufferHeight) {
+  render(gl: WebGLRenderingContext, destination: Framebuffer): Framebuffer {
+    if (
+      this._width !== gl.drawingBufferWidth ||
+      this._height !== gl.drawingBufferHeight
+    ) {
       this._width = gl.drawingBufferWidth;
       this._height = gl.drawingBufferHeight;
       this._texture = this._generatePointStarTexture(gl);
@@ -61,7 +63,7 @@ export class PointstarRenderer {
         width,
         height,
         this._density,
-        this._brightness,
+        this._brightness
       ),
     });
   }
@@ -76,7 +78,9 @@ export class PointstarRenderer {
     let data = new Uint8Array(width * height * 3);
     for (let i = 0; i < count; i++) {
       const r = Math.floor(this._rng.random() * width * height);
-      const c = Math.round(255 * Math.log(1 - this._rng.random()) * -brightness);
+      const c = Math.round(
+        255 * Math.log(1 - this._rng.random()) * -brightness
+      );
       data[r * 3 + 0] = c;
       data[r * 3 + 1] = c;
       data[r * 3 + 2] = c;

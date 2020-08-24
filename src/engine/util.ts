@@ -1,8 +1,7 @@
-const DEBUG_MODE = true;
 import { updateDebugInfo } from "./debug/index";
 import { Context } from "./gl/util";
 import { GLConstants } from "./gl/constants";
-
+const DEBUG_MODE = true;
 let then = 0;
 
 export function createBitmap(width: number, height: number, data: Uint8ClampedArray) {

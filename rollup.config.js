@@ -5,9 +5,11 @@ import dev from "rollup-plugin-dev";
 import postcss from "rollup-plugin-postcss";
 import image from "@rollup/plugin-image";
 import glslify from "rollup-plugin-glslify";
+import { join } from "path";
 import inline, { defaultTemplate } from "./plugins/rollup-plugin-html-inline";
 import packageOutput from "./plugins/rollup-plugin-package-js13k";
 const env = process.env.NODE_ENV || "development";
+const isDev = env === "development";
 
 let plugins = [
   glslify({
@@ -38,13 +40,14 @@ let plugins = [
     },
   }),
   inline({
-    title: "404: this world does not exist",
-    canvasId: "game",
+    title: "404",
+    canvasId: "g",
     template: defaultTemplate,
-    sourcemap: "main.js.map",
+    sourcemap: "bundle.js.map",
+    delete: false,
   }),
   packageOutput({
-    name: "js13k-template",
+    name: "js13k-404",
     directory: "dist",
     include: ["index.html"],
     notify: env === "development",
@@ -65,16 +68,12 @@ if (env === "development") {
 }
 
 export default {
-  input: "src/main.ts",
-  output: [
-    {
-      name: "prod",
-      dir: "dist",
-      format: "es",
-      sourcemap: true,
-      strict: false,
-      plugins: [],
-    },
-  ],
+  input: join(__dirname, "src", "main.ts"),
+  output: {
+    file: join(__dirname, "dist", "bundle.js"),
+    format: "iife",
+    sourcemap: true,
+    strict: false
+  },
   plugins: plugins,
 };

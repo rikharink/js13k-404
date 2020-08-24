@@ -3,7 +3,7 @@ import { GLConstants } from "../gl/constants";
 
 declare global {
   interface Window {
-    Dump: any;
+    DebugDump: any;
   }
 }
 

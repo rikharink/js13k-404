@@ -43,8 +43,8 @@ export class Game {
     this._currentScene.background = new Starfield(
       gl,
       this._shaders,
-      3,
-      4,
+      this._random.randInt(2, 5),
+      this._random.randInt(5, 30),
       this._random
     );
     this._currentScene.tilemap = getTileMap(gl, this._shaders);

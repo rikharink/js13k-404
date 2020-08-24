@@ -71,13 +71,13 @@ export class Starfield extends PingPong implements IRenderable {
       (source: Framebuffer, destination: Framebuffer) =>
         this._starRenderer.render(gl, source, destination, {
           coreColor: [1, 1, 1],
-          coreRadius: this._rng.random() * 0.0,
+          coreRadius: this._rng.random() * 0.01 + 0.001,
           haloColor: [
             this._rng.random(),
             this._rng.random(),
             this._rng.random(),
           ],
-          haloFalloff: this._rng.random() * 1024 + 32,
+          haloFalloff: this._rng.random() * 512 + 16,
           center: [this._rng.random(), this._rng.random()],
           resolution: [
             gl.drawingBufferWidth,
