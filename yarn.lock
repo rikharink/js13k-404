@@ -564,7 +564,7 @@ binary-extensions@^2.0.0:
   resolved "https://registry.yarnpkg.com/binary-extensions/-/binary-extensions-2.1.0.tgz#30fa40c9e7fe07dbc895678cd287024dea241dd9"
   integrity sha512-1Yj8h9Q+QDF5FzhMs/c9+6UntbD5MkRfRwac8DoEm9ZfUBZ7tZ55YcGVAzEe4bXsdQHEk+s9S5wsOKVdZrw0tQ==
 
-bl@^1.0.0:
+bl@^1.0.0, bl@^1.0.1:
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/bl/-/bl-1.2.2.tgz#a160911717103c07410cef63ef51b397c025af9c"
   integrity sha512-e8tQYnZodmebYDWGH7KMRvtzKXaJHx3BbilrgZCfvyLUYdKpK1t5PSPmpkny/SgiTSCnjfLW7v5rlONXVFkQEA==
@@ -1095,6 +1095,20 @@ css-what@^3.2.1:
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/css-what/-/css-what-3.3.0.tgz#10fec696a9ece2e591ac772d759aacabac38cd39"
   integrity sha512-pv9JPyatiPaQ6pf4OvD/dbfm0o5LviWmwxNWzblYf/1u9QZd0ihV+PMwy5jdQWQ3349kZmKEx9WXuSka2dM4cg==
+
+cssauron-glsl@X.X.X:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/cssauron-glsl/-/cssauron-glsl-1.0.0.tgz#9873641442b52bae08b9103f8546885af69c74cc"
+  integrity sha1-mHNkFEK1K64IuRA/hUaIWvacdMw=
+  dependencies:
+    cssauron "~1.0.0"
+
+cssauron@~1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/cssauron/-/cssauron-1.0.0.tgz#3c9891541075be90ee59c0c2a3d400e4fffec42d"
+  integrity sha1-PJiRVBB1vpDuWcDCo9QA5P/+xC0=
+  dependencies:
+    through X.X.X
 
 cssesc@^3.0.0:
   version "3.0.0"
@@ -1854,6 +1868,14 @@ globals@^11.1.0:
   resolved "https://registry.yarnpkg.com/globals/-/globals-11.12.0.tgz#ab8795338868a0babd8525758018c2a7eb95c42e"
   integrity sha512-WOBp/EEGUiIsJSp7wcv/y6MO+lV9UoncWqxuFfm8eBwzWNgyfBd6Gz+IeKQ9jCmyhoH99g15M3T+QaVHFjizVA==
 
+glsl-deparser@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/glsl-deparser/-/glsl-deparser-1.0.0.tgz#5e7eb363ec54af92916ccffc82ed03e9bfe33e0c"
+  integrity sha1-Xn6zY+xUr5KRbM/8gu0D6b/jPgw=
+  dependencies:
+    cssauron-glsl X.X.X
+    through "~1.1.2"
+
 glsl-inject-defines@^1.0.1:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/glsl-inject-defines/-/glsl-inject-defines-1.0.3.tgz#dd1aacc2c17fcb2bd3fc32411c6633d0d7b60fd4"
@@ -1863,10 +1885,28 @@ glsl-inject-defines@^1.0.1:
     glsl-token-string "^1.0.1"
     glsl-tokenizer "^2.0.2"
 
+glsl-min-stream@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/glsl-min-stream/-/glsl-min-stream-1.0.0.tgz#b6bfe6353a42b15b1fac354290cb3551e0582812"
+  integrity sha1-tr/mNTpCsVsfrDVCkMs1UeBYKBI=
+  dependencies:
+    cssauron-glsl X.X.X
+    shortest "0.0.0"
+    through "~1.1.2"
+
 glsl-noise@^0.0.0:
   version "0.0.0"
   resolved "https://registry.yarnpkg.com/glsl-noise/-/glsl-noise-0.0.0.tgz#367745f3a33382c0eeec4cb54b7e99cfc1d7670b"
   integrity sha1-NndF86MzgsDu7Ey1S36Zz8HXZws=
+
+glsl-parser@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/glsl-parser/-/glsl-parser-2.0.1.tgz#3ffac4ee05cc4d8141fd6b1e41e82b3766ff61b9"
+  integrity sha512-hcPQtfz0AtxkyooSvim0RsHFNsiHXTY80GX2GtoTpFTImxW3cOINpb0cY6HFKnYkbheQRM7cDzCzzItNT6ZSiA==
+  dependencies:
+    glsl-tokenizer "^2.1.4"
+    through "2.3.4"
+    through2 "^0.6.3"
 
 glsl-resolve@0.0.1:
   version "0.0.1"
@@ -1928,7 +1968,7 @@ glsl-token-whitespace-trim@^1.0.0:
   resolved "https://registry.yarnpkg.com/glsl-token-whitespace-trim/-/glsl-token-whitespace-trim-1.0.0.tgz#46d1dfe98c75bd7d504c05d7d11b1b3e9cc93b10"
   integrity sha1-RtHf6Yx1vX1QTAXX0RsbPpzJOxA=
 
-glsl-tokenizer@^2.0.0, glsl-tokenizer@^2.0.2:
+glsl-tokenizer@^2.0.0, glsl-tokenizer@^2.0.2, glsl-tokenizer@^2.1.4, glsl-tokenizer@^2.1.5:
   version "2.1.5"
   resolved "https://registry.yarnpkg.com/glsl-tokenizer/-/glsl-tokenizer-2.1.5.tgz#1c2e78c16589933c274ba278d0a63b370c5fee1a"
   integrity sha512-XSZEJ/i4dmz3Pmbnpsy3cKh7cotvFlBiZnDOwnj/05EwNp2XrhQ4XKJxT7/pDt4kp4YcpRSKz8eTV7S+mwV6MA==
@@ -1965,6 +2005,16 @@ glslify-deps@^1.2.5:
     map-limit "0.0.1"
     resolve "^1.0.0"
 
+glslify-squish@^1.0.4:
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/glslify-squish/-/glslify-squish-1.0.4.tgz#2e33964a954412c29bd43a8168f79314cfa01e23"
+  integrity sha512-HLQXQY31UaUttyw6JRpL/PGNwmRjj0kC5K3ksEoxRdjN8CURtvO9GEq9NDRq53LH9ztTtyIGvXy314nep5V22Q==
+  dependencies:
+    glsl-deparser "^1.0.0"
+    glsl-min-stream "^1.0.0"
+    glsl-parser "^2.0.1"
+    glsl-tokenizer "^2.1.5"
+
 glslify@^7.0.0:
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/glslify/-/glslify-7.0.0.tgz#10d5db9541ee07c6548ea55c679edda20307653d"
@@ -1985,6 +2035,32 @@ glslify@^7.0.0:
     static-eval "^2.0.0"
     through2 "^2.0.1"
     xtend "^4.0.0"
+
+glslify@^7.1.0:
+  version "7.1.0"
+  resolved "https://registry.yarnpkg.com/glslify/-/glslify-7.1.0.tgz#f1a76b1e0e6b0cd8c8c714d474264a2f84281615"
+  integrity sha512-6NJb9iq+6m4VhYitldiaJs4VB4wPaWNHr+DQ34fTsDVcq+5p9GsKNkJTm91A5IFcpuRQmL5VABEZ0rvB7VEoNQ==
+  dependencies:
+    bl "^1.0.1"
+    concat-stream "^1.5.2"
+    duplexify "^3.4.5"
+    falafel "^2.1.0"
+    from2 "^2.3.0"
+    glsl-resolve "0.0.1"
+    glsl-token-whitespace-trim "^1.0.0"
+    glslify-bundle "^5.0.0"
+    glslify-deps "^1.2.5"
+    minimist "^1.2.5"
+    resolve "^1.1.5"
+    stack-trace "0.0.9"
+    static-eval "^2.0.5"
+    through2 "^2.0.1"
+    xtend "^4.0.0"
+
+glslx@^0.2.1:
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/glslx/-/glslx-0.2.1.tgz#51b9ced3c28f18801f47e4bfe1c22abea1eb662f"
+  integrity sha512-Vxs9/IMBXmHBofCxuyta9Q7spSlRQ4fb85GTGmLSmOMdn7d9/5r6/MAcvo6pB2yWWZB6Rw4szLSLeKI/voPM/Q==
 
 got@^7.0.0:
   version "7.1.0"
@@ -4150,6 +4226,11 @@ shellwords@^0.1.1:
   resolved "https://registry.yarnpkg.com/shellwords/-/shellwords-0.1.1.tgz#d6b9181c1a48d397324c84871efbcfc73fc0654b"
   integrity sha512-vFwSUfQvqybiICwZY5+DAWIPLKsWO31Q91JSKl3UYv+K5c2QRPzn0qzec6QPu1Qc9eHYItiP3NdJqNVqetYAww==
 
+shortest@0.0.0:
+  version "0.0.0"
+  resolved "https://registry.yarnpkg.com/shortest/-/shortest-0.0.0.tgz#dc4c8d0722e7a9208ec7d2098e4cda8cac6e567d"
+  integrity sha1-3EyNByLnqSCOx9IJjkzajKxuVn0=
+
 signal-exit@^3.0.0:
   version "3.0.3"
   resolved "https://registry.yarnpkg.com/signal-exit/-/signal-exit-3.0.3.tgz#a1410c2edd8f077b08b4e253c8eacfcaf057461c"
@@ -4265,7 +4346,7 @@ stack-trace@0.0.x:
   resolved "https://registry.yarnpkg.com/stack-trace/-/stack-trace-0.0.10.tgz#547c70b347e8d32b4e108ea1a2a159e5fdde19c0"
   integrity sha1-VHxws0fo0ytOEI6hoqFZ5f3eGcA=
 
-static-eval@^2.0.0:
+static-eval@^2.0.0, static-eval@^2.0.5:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/static-eval/-/static-eval-2.1.0.tgz#a16dbe54522d7fa5ef1389129d813fd47b148014"
   integrity sha512-agtxZ/kWSsCkI5E4QifRwsaPs0P0JmZV6dkLz6ILYfFYQGn+5plctanRN+IC8dJRiFkyXHrwEE3W9Wmx67uDbw==
@@ -4539,10 +4620,20 @@ through2@^2.0.1:
     readable-stream "~2.3.6"
     xtend "~4.0.1"
 
-through@^2.3.8:
+through@2.3.4:
+  version "2.3.4"
+  resolved "https://registry.yarnpkg.com/through/-/through-2.3.4.tgz#495e40e8d8a8eaebc7c275ea88c2b8fc14c56455"
+  integrity sha1-SV5A6Nio6uvHwnXqiMK4/BTFZFU=
+
+through@X.X.X, through@^2.3.8:
   version "2.3.8"
   resolved "https://registry.yarnpkg.com/through/-/through-2.3.8.tgz#0dd4c9ffaabc357960b1b724115d7e0e86a2e1f5"
   integrity sha1-DdTJ/6q8NXlgsbckEV1+Doai4fU=
+
+through@~1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/through/-/through-1.1.2.tgz#344a5425a3773314ca7e0eb6512fbafaf76c0bfe"
+  integrity sha1-NEpUJaN3MxTKfg62US+6+vdsC/4=
 
 time-zone@^1.0.0:
   version "1.0.0"

@@ -18,6 +18,7 @@ export default function inline(
   return {
     name: "rollup-plugin-html-inline",
     generateBundle(_, bundle, isWrite) {
+      console.log("INLINE");
       if (!isWrite) return;
       const renderTemplate = options.template || defaultTemplate;
       const scripts = [];

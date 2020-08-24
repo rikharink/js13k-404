@@ -4,9 +4,10 @@ import livereload from "rollup-plugin-livereload";
 import dev from "rollup-plugin-dev";
 import postcss from "rollup-plugin-postcss";
 import image from "@rollup/plugin-image";
-import glslify from "rollup-plugin-glslify";
+import glslify from "./plugins/rollup-plugin-glslify";
 import { join } from "path";
 import inline, { defaultTemplate } from "./plugins/rollup-plugin-html-inline";
+import shaderMinify from "./plugins/rollup-plugin-shader-minify";
 import packageOutput from "./plugins/rollup-plugin-package-js13k";
 const env = process.env.NODE_ENV || "development";
 const isDev = env === "development";
@@ -23,6 +24,7 @@ let plugins = [
     plugins: [],
   }),
   typescript(),
+  shaderMinify(),
   terser({
     compress: {
       passes: 4,
