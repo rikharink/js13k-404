@@ -1,10 +1,151 @@
 * {
-    background: black;
-    margin: 0;
+  margin: 0;
+  font-family: sans-serif;
+}
+
+html {
+  background: black;
 }
 
 canvas {
-    display: block;
-    width: 100vw;
-    height: 100vh;
+  display: block;
+  width: 100vw;
+  height: 100vh;
+}
+
+.modal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 50vw;
+  height: 25vh;
+  z-index: 1000;
+  background: #000000d0;
+  color: white;
+  border-radius: 5px;
+  transform: translate(-50%, -50%);
+  padding: 16px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  box-shadow: 4px 4px 2px 1px #0f0f0f;
+}
+
+fieldset.toggles div {
+  box-sizing: border-box;
+  position: relative;
+}
+
+fieldset.toggles > div {
+  margin: 1.5em 0;
+}
+
+fieldset.toggles > div:first-of-type {
+  margin-top: 1em;
+}
+
+fieldset.toggles > div:last-of-type {
+  margin-bottom: 1em;
+}
+
+fieldset.toggles {
+  border: 0.1em solid rgba(0, 0, 0, 0.15);
+}
+
+.toggles [aria-pressed] {
+  display: block;
+  box-sizing: border-box;
+  border: none;
+  color: inherit;
+  background: none;
+  font: inherit;
+  line-height: inherit;
+  text-align: left;
+  padding: 0.4em 0 0.4em 4em;
+  /*   position: relative; */
+}
+
+.toggles [aria-pressed][disabled],
+.toggles [aria-pressed][disabled]:hover {
+  color: #999;
+}
+
+.toggles [aria-pressed]:focus,
+.toggles [aria-pressed]:hover {
+  color: #afafaf;
+  outline: none;
+}
+
+.toggles [aria-pressed]:focus::before,
+.toggles [aria-pressed]:hover::before {
+  box-shadow: 0 0 0.5em #333;
+}
+
+.toggles [aria-pressed]:focus::after,
+.toggles [aria-pressed]:hover::after {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='50' cy='50' r='50' fill='rgba(0,0,0,.25)'/%3E%3C/svg%3E");
+  background-size: 30%;
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+
+.toggles [aria-pressed]::before,
+.toggles [aria-pressed]::after {
+  content: "";
+  position: absolute;
+  height: 1.5em;
+  transition: all 0.25s ease;
+}
+
+.toggles [aria-pressed]::before {
+  left: 0;
+  top: 0.2em;
+  width: 3em;
+  border: 0.2em solid #767676;
+  background: #767676;
+  border-radius: 1.1em;
+}
+
+.toggles [aria-pressed]::after {
+  left: 0;
+  top: 0.25em;
+  background-color: #fff;
+  background-position: center center;
+  border-radius: 50%;
+  width: 1.5em;
+  border: 0.15em solid #767676;
+}
+
+.toggles [aria-pressed="true"]::after {
+  left: 1.6em;
+  border-color: #36a829;
+  color: #36a829;
+}
+
+.toggles [aria-pressed="true"]::before {
+  background-color: #36a829;
+  border-color: #36a829;
+}
+
+.toggles [aria-pressed][disabled]::before {
+  background-color: transparent;
+  border-color: #ddd;
+}
+
+.toggles [aria-pressed][disabled]::after {
+  border-color: #ddd;
+}
+
+.toggles [aria-pressed][disabled]:hover {
+  color: #999; /* case for CSS custom property if not supporting IE/Edge */
+}
+
+.toggles [aria-pressed][disabled]:hover::before {
+  box-shadow: none;
+}
+
+.toggles [aria-pressed][disabled]:hover::after {
+  background-image: none;
 }

@@ -1,6 +1,6 @@
 import { IRenderable } from "./engine/renderable";
 import { Context } from "./engine/gl/util";
-import { TextureRenderer } from "./engine/gl/renderers/texture-renderer";
+import { PassthroughRenderer } from "./engine/gl/renderers/passthrough-renderer";
 import { PingPong } from "./engine/gl/ping-pong";
 import { Framebuffer } from "./engine/gl/framebuffer";
 import { ShaderStore } from "./engine/gl/shaders/shaders";
@@ -15,7 +15,7 @@ export class Starfield extends PingPong implements IRenderable {
   private _resultTexture!: WebGLTexture;
   private _nebulaeCount: number;
   private _starCount: number;
-  private _textureRenderer: TextureRenderer;
+  private _textureRenderer: PassthroughRenderer;
   private _pointstarRenderer: PointstarRenderer;
   private _starRenderer: StarRenderer;
   private _nebulaeRenderer: NebulaeRenderer;
@@ -33,13 +33,13 @@ export class Starfield extends PingPong implements IRenderable {
     this._nebulaeCount = nebulaeCount;
     this._starCount = starCount;
 
-    this._textureRenderer = new TextureRenderer(gl, shaders);
+    this._textureRenderer = new PassthroughRenderer(gl, shaders);
     this._pointstarRenderer = new PointstarRenderer(gl, shaders, rng, {
       brightness: rng.random() * 0.2 + 0.125,
       density: rng.random() * 0.1 + 0.005,
     });
     this._starRenderer = new StarRenderer(gl, shaders);
-    this._nebulaeRenderer = new NebulaeRenderer(gl, shaders, rng);
+    this._nebulaeRenderer = new NebulaeRenderer(gl, shaders);
     this._rng = rng;
     this._scale = Math.max(gl.drawingBufferWidth, gl.drawingBufferHeight);
   }
@@ -79,10 +79,7 @@ export class Starfield extends PingPong implements IRenderable {
           ],
           haloFalloff: this._rng.random() * 512 + 16,
           center: [this._rng.random(), this._rng.random()],
-          resolution: [
-            gl.drawingBufferWidth,
-            gl.drawingBufferHeight,
-          ],
+          resolution: [gl.drawingBufferWidth, gl.drawingBufferHeight],
           scale: this._scale,
         })
     );
@@ -94,10 +91,7 @@ export class Starfield extends PingPong implements IRenderable {
       haloColor: [this._rng.random(), this._rng.random(), this._rng.random()],
       haloFalloff: this._rng.random() * 32 + 8,
       center: [this._rng.random(), this._rng.random()],
-      resolution: [
-        gl.drawingBufferWidth,
-        gl.drawingBufferHeight,
-      ],
+      resolution: [gl.drawingBufferWidth, gl.drawingBufferHeight],
       scale: this._scale,
     });
 

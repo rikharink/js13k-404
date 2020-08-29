@@ -162,7 +162,7 @@ export class Kick extends Instrument<KickOptions> {
     const osc = this._ctx.createOscillator();
     osc.type = this._wave;
     osc.frequency.value = this._frequencyStart;
-    osc.frequency.linearRampToValueAtTime(
+    osc.frequency.exponentialRampToValueAtTime(
       this._frequency,
       time + this._pitchDecay
     );
@@ -172,7 +172,7 @@ export class Kick extends Instrument<KickOptions> {
 
     const triangleGainNode = this._ctx.createGain();
     triangleGainNode.gain.value = 1;
-    triangleGainNode.gain.linearRampToValueAtTime(0.01, time + this._decay);
+    triangleGainNode.gain.exponentialRampToValueAtTime(0.01, time + this._decay);
 
     osc.connect(waveShaper);
     waveShaper.connect(triangleGainNode);

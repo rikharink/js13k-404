@@ -58,8 +58,8 @@ export abstract class PingPong {
       format: GLConstants.RGBA,
       width: gl.drawingBufferWidth,
       height: gl.drawingBufferHeight,
-      pixels: null
-    })
+      pixels: null,
+    });
     const pingFramebuffer = gl.createFramebuffer()!;
     gl.bindFramebuffer(GLConstants.FRAMEBUFFER, pingFramebuffer);
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
@@ -81,7 +81,7 @@ export abstract class PingPong {
       format: GLConstants.RGBA,
       width: gl.drawingBufferWidth,
       height: gl.drawingBufferHeight,
-      pixels: null
+      pixels: null,
     });
     const pongFramebuffer = gl.createFramebuffer()!;
     gl.bindFramebuffer(GLConstants.FRAMEBUFFER, pongFramebuffer);

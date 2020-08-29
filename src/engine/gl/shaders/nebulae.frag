@@ -31,7 +31,7 @@ float noise(vec2 p){
 
 void main(){
   vec4 p=texture2D(u_source,v_uv);
-  float n=noise(gl_FragCoord.xy*u_scale*1.);
+  float n=noise(gl_FragCoord.xy*u_scale*1.+u_offset);
   n=pow(n+u_density,u_falloff);
   gl_FragColor=vec4(mix(p.rgb,u_color,n),1.);
 }

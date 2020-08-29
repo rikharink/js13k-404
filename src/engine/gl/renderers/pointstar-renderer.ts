@@ -1,7 +1,7 @@
 import { Framebuffer } from "../framebuffer";
 import { Context, createAndSetupTexture, nextHighestPowerOfTwo } from "../util";
 import { ShaderStore } from "../shaders/shaders";
-import { TextureRenderer } from "./texture-renderer";
+import { PassthroughRenderer } from "./passthrough-renderer";
 import { GLConstants } from "../constants";
 import { Random } from "../../random";
 
@@ -14,7 +14,7 @@ export class PointstarRenderer {
   private _width: number;
   private _height: number;
   private _texture: WebGLTexture;
-  private _textureRenderer: TextureRenderer;
+  private _textureRenderer: PassthroughRenderer;
   private _rng: Random;
   private _density: number;
   private _brightness: number;
@@ -28,7 +28,7 @@ export class PointstarRenderer {
     this._rng = rng;
     this._width = gl.drawingBufferWidth;
     this._height = gl.drawingBufferHeight;
-    this._textureRenderer = new TextureRenderer(gl, shaders);
+    this._textureRenderer = new PassthroughRenderer(gl, shaders);
     this._density = density;
     this._brightness = brightness;
     this._texture = this._generatePointStarTexture(gl);

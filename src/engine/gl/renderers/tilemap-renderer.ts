@@ -1,4 +1,3 @@
-import { IRenderable } from "../../renderable";
 import {
   Context,
   bindVAO,
@@ -14,10 +13,9 @@ import {
   zRotate,
 } from "../../math/m4";
 import { Framebuffer } from "../framebuffer";
-import { TextureRenderer } from "./texture-renderer";
-import { ShaderStore } from "../shaders/shaders";
+import { PassthroughRenderer } from "./passthrough-renderer";
+import { ShaderStore, Shaders } from "../shaders/shaders";
 import { GLConstants } from "../constants";
-import { Shaders } from "../../../game";
 
 const dst = new Float32Array(16);
 
@@ -68,7 +66,7 @@ export class TilemapRenderer {
   private _tilemapSizeLocation: WebGLUniformLocation | null;
   private _tilesetSizeLocation: WebGLUniformLocation | null;
   private _tintLocation: WebGLUniformLocation | null;
-  private _textureRenderer: TextureRenderer;
+  private _textureRenderer: PassthroughRenderer;
 
   private _vao: Vao | null;
   private _positionBuffer: WebGLBuffer | null;
@@ -84,7 +82,7 @@ export class TilemapRenderer {
     map: Tile[][],
     tint: [number, number, number, number] = [1, 1, 1, 1]
   ) {
-    this._textureRenderer = new TextureRenderer(gl, shaders);
+    this._textureRenderer = new PassthroughRenderer(gl, shaders);
     this._tileset = tileset;
     this._tilesetWidth = tilesetShape[0];
     this._tilesetHeight = tilesetShape[1];
@@ -152,7 +150,7 @@ export class TilemapRenderer {
       }
       i += this.width - this.mapWidth;
     }
-    
+
     return createAndSetupTexture(gl, {
       wrap: GLConstants.REPEAT,
       filter: GLConstants.NEAREST,
@@ -177,7 +175,15 @@ export class TilemapRenderer {
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
 
     const mat = new Float32Array(16);
-    orthographic(0, gl.drawingBufferWidth, gl.drawingBufferHeight, 0, -1, 1, mat);
+    orthographic(
+      0,
+      gl.drawingBufferWidth,
+      gl.drawingBufferHeight,
+      0,
+      -1,
+      1,
+      mat
+    );
     scale(mat, gl.drawingBufferWidth, gl.drawingBufferHeight, 1, mat);
 
     const scaleX = 1;

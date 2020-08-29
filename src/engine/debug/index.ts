@@ -1,12 +1,6 @@
 import { Context } from "./../gl/util";
 import { GLConstants } from "../gl/constants";
 
-declare global {
-  interface Window {
-    DebugDump: any;
-  }
-}
-
 let debug: HTMLDivElement | undefined;
 let avgFPS = 60;
 let alpha = 0.9;

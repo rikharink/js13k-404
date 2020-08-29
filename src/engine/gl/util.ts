@@ -1,27 +1,35 @@
 import { GLConstants } from "./constants";
 
-export type Context = WebGLRenderingContext;
-export type Vao = WebGLVertexArrayObject;
+export type Context = WebGLRenderingContext | WebGL2RenderingContext;
+export type Vao = WebGLVertexArrayObject | WebGLVertexArrayObjectOES;
 
 const dst = new Float32Array(16);
 let oes: OES_vertex_array_object | undefined;
 
 export function getContext(canvas: HTMLCanvasElement): Context {
-  return canvas.getContext("webgl")!;
+  return canvas.getContext("webgl2")!;
 }
 
 export function createVAO(gl: Context): Vao | null {
-  if (!oes) {
-    oes = gl.getExtension("OES_vertex_array_object")!;
+  if (gl instanceof WebGLRenderingContext) {
+    if (!oes) {
+      oes = gl.getExtension("OES_vertex_array_object")!;
+    }
+    return oes.createVertexArrayOES()!;
+  } else {
+    return gl.createVertexArray();
   }
-  return oes.createVertexArrayOES()!;
 }
 
 export function bindVAO(gl: Context, vao: Vao | null) {
-  if (!oes) {
-    oes = gl.getExtension("OES_vertex_array_object")!;
+  if (gl instanceof WebGLRenderingContext) {
+    if (!oes) {
+      oes = gl.getExtension("OES_vertex_array_object")!;
+    }
+    oes.bindVertexArrayOES(vao);
+  } else {
+    gl.bindVertexArray(vao);
   }
-  oes.bindVertexArrayOES(vao);
 }
 
 export function createShader(

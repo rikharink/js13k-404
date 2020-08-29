@@ -45,13 +45,5 @@
     "typescript": "^3.9.7",
     "zipstats": "^1.1.0"
   },
-  "dependencies": {},
-  "glslify": {
-    "transform": [
-      [
-        "glslify-squish",
-        {}
-      ]
-    ]
-  }
+  "dependencies": {}
 }

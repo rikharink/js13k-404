@@ -1,8 +1,7 @@
 import { Context, bindVAO, createVAO } from "../util";
 import { Framebuffer } from "../framebuffer";
-import { ShaderStore } from "../shaders/shaders";
+import { ShaderStore, Shaders } from "../shaders/shaders";
 import { GLConstants } from "../constants";
-import { Shaders } from "../../../game";
 
 interface StarRendererOptions {
   coreColor: [number, number, number];

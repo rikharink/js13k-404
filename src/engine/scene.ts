@@ -1,107 +1,110 @@
-import { IRenderable } from "./renderable";
+import { Settings } from "./../settings";
+import { PassthroughRenderer } from "./gl/renderers/passthrough-renderer";
+import { CrtRenderer } from "./gl/renderers/crt-renderer";
 import { TilemapRenderer } from "./gl/renderers/tilemap-renderer";
 import { Context } from "./gl/util";
 import { PingPong } from "./gl/ping-pong";
-import { TextureRenderer } from "./gl/renderers/texture-renderer";
 import { ShaderStore } from "./gl/shaders/shaders";
-import { SpriteRenderer } from "./gl/renderers/sprite-renderer";
-import { Frame } from "./gl/renderers/frame";
-import { Sprite } from "./gl/renderers/sprite";
-import { Point } from "./gl/renderers/point";
 import { Framebuffer } from "./gl/framebuffer";
 import { Random } from "./random";
-import { PixelSprite, Mask } from "./procgen/pixel-sprite";
-import { GLConstants } from "./gl/constants";
-import { createImageFromTexture } from "./debug/index";
+import { IRenderable } from "./renderable";
+import { AsciiRenderer } from "./gl/renderers/ascii-renderer";
+
+interface IEffect {
+  render(
+    gl: Context,
+    source: Framebuffer,
+    destination: Framebuffer,
+    now?: number
+  ): Framebuffer;
+}
 
 export class Scene extends PingPong {
   public _rng: Random;
   public _gl: Context;
   public _width: number;
   public _height: number;
-  private _tilemap?: TilemapRenderer;
   private _background?: IRenderable;
-  private _spritesRenderer!: SpriteRenderer;
-  private _textureRenderer: TextureRenderer;
+  private _crtRenderer: CrtRenderer;
+  private _crtEffectOn!: boolean;
+  private _asciiRenderer: AsciiRenderer;
+  private _asciiEffectOn!: boolean;
+  private _passthroughRenderer: PassthroughRenderer;
+  private _effects: IEffect[] = [];
+  private _settings: Settings;
 
-  private _scrollX = 0;
-  private _scrollY = 0;
-  private _zoomX = 1;
-  private _zoomY = 1;
-  sprs: Sprite[] = [];
-
-  constructor(gl: Context, shaders: ShaderStore, rng: Random) {
+  constructor(
+    gl: Context,
+    shaders: ShaderStore,
+    rng: Random,
+    settings: Settings
+  ) {
     super(gl);
+    this._settings = settings;
     this._gl = gl;
     this._rng = rng;
     [this._width, this._height] = [0, 0];
-    this._textureRenderer = new TextureRenderer(gl, shaders);
-    // this._spritesRenderer = new SpriteRenderer(gl, shaders, false);
-    // this._spritesRenderer.camera.to.set(0.5);
+    this._crtRenderer = new CrtRenderer(gl, shaders);
+    this._asciiRenderer = new AsciiRenderer(gl, shaders);
+    this.updateSettings();
+    this._passthroughRenderer = new PassthroughRenderer(gl, shaders);
+    document.addEventListener(
+      "settingsupdated",
+      this._updateSettingsHandler.bind(this)
+    );
   }
 
-  private _setupSprites() {
-    //prettier-ignore
-    const mask = new Mask([
-      0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 1, 1, 0,
-      0, 0, 0, 0, 0, 1,-1, 0,
-      0, 0, 0, 0, 1, 1,-1, 0,
-      0, 0, 0, 0, 1, 1,-1, 0,
-      0, 0, 0, 1, 1, 1,-1, 0,
-      0, 0, 1, 1, 1, 2, 2, 0,
-      0, 0, 1, 1, 1, 2, 2, 0,
-      0, 0, 1, 1, 1, 2, 2, 0,
-      0, 0, 1, 1, 1, 1,-1, 0,
-      0, 0, 0, 0, 1, 1, 1, 0,
-      0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0,
-], 8, 16, true, false);
-    let ship = new PixelSprite(mask, this._rng, { colored: true });
-    let atlas = this._spritesRenderer.texture(ship.canvas, 0);
-    atlas.anchor = new Point(0.5);
-    const bFrame = atlas.frame(new Point(), new Point(12));
-    const frames: Frame[] = [atlas, bFrame];
-    let cl = 0;
-    const layer = this._spritesRenderer.layer(cl);
+  private _updateSettingsHandler() {
+    this._settings.load();
+    this.updateSettings();
+  }
 
-    for (let i = 0; i < 1000; i++) {
-      const sprite = new Sprite(frames[1], { visible: true });
-      let x = this._rng.random() * this._gl.drawingBufferWidth;
-      let y = this._rng.random() * this._gl.drawingBufferHeight;
-      sprite.position.set(x, y);
-      sprite.tint = this._rng.random() * 0xffffff;
-      sprite.rotation = this._rng.random() * Math.PI * 2;
-      // sprite.scale.set(2);
-      layer.add(sprite);
-      this.sprs.push(sprite);
+  public updateSettings() {
+    this._crtEffectOn = !this._settings.crtOn;
+    this._asciiEffectOn = !this._settings.asciiOn;
+    this._toggleAscii();
+    this._toggleCrt();
+  }
+
+  private _toggleCrt() {
+    this._crtEffectOn = !this._crtEffectOn;
+    if (this._crtEffectOn) {
+      this._effects.push(this._crtRenderer);
+    } else {
+      this._effects = this._effects.filter((e) => e !== this._crtRenderer);
     }
   }
 
-  public set zoom(value: { x: number; y: number }) {
-    [this._zoomX, this._zoomY] = [value.x, value.y];
-  }
-
-  public set scroll(value: { x: number; y: number }) {
-    [this._scrollX, this._scrollY] = [value.x, value.y];
-  }
-
-  public set tilemap(tilemap: TilemapRenderer) {
-    this._tilemap = tilemap;
+  private _toggleAscii() {
+    this._asciiEffectOn = !this._asciiEffectOn;
+    if (this._asciiEffectOn) {
+      this._effects.push(this._asciiRenderer);
+    } else {
+      this._effects = this._effects.filter((e) => e !== this._asciiRenderer);
+    }
   }
 
   public set background(background: IRenderable) {
     this._background = background;
   }
 
-  public addSprite(sprite: Sprite) {
-    this._spritesRenderer.add(sprite);
+  private _renderEffects(
+    gl: Context,
+    source: Framebuffer,
+    destination: Framebuffer,
+    now: number
+  ) {
+    let ping = source;
+    let pong = destination;
+    for (let effect of this._effects) {
+      let result = effect.render.bind(effect)(gl, ping, pong, now);
+      pong = ping;
+      ping = result;
+    }
+    return ping;
   }
 
-  public render(gl: Context, now?: number): void {
+  public render(gl: Context, now: number): void {
     if (
       this._width !== gl.drawingBufferWidth ||
       this._height !== gl.drawingBufferHeight
@@ -111,11 +114,10 @@ export class Scene extends PingPong {
         gl.drawingBufferHeight,
       ];
       this.resetFramebuffers(gl);
-      // this._spritesRenderer.camera.at.set(this._width, this._height);
     }
     const display: Framebuffer = { framebuffer: null, texture: null };
-    this._background!.render(gl, this._ping, display);
-    // this._tilemap!.render(gl, this._ping, { framebuffer: null, texture: null });
-    // this._spritesRenderer!.render(gl, this._pong, display);
+    this._background!.render(gl, this._ping, this._pong);
+    let result = this._renderEffects(gl, this._pong, this._ping, now);
+    this._passthroughRenderer.render(gl, result.texture!, display.framebuffer);
   }
 }

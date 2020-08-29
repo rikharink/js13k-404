@@ -7,7 +7,6 @@ function getAlphabetFromNumber(num) {
     return str;
 }
 
-
 function mangle(name, table) {
     if (!table[name]) {
         let index = Object.keys(table).length;
@@ -16,7 +15,6 @@ function mangle(name, table) {
     }
     return table[name];
 }
-
 
 export default function minifyShaders(options = {}) {
   return {

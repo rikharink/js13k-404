@@ -1,5 +1,5 @@
 import { Framebuffer } from "../framebuffer";
-import { ShaderStore } from "../shaders/shaders";
+import { ShaderStore, Shaders } from "../shaders/shaders";
 import {
   Context,
   createVAO,
@@ -7,7 +7,6 @@ import {
   bindVAO,
 } from "../util";
 import { GLConstants } from "../constants";
-import { Shaders } from "../../../game";
 import { Random } from "../../random";
 
 interface NebulaeOptions {
@@ -34,7 +33,7 @@ export class NebulaeRenderer {
   private _colorLocation: WebGLUniformLocation;
   private _densityLocation: WebGLUniformLocation;
 
-  constructor(gl: Context, shaders: ShaderStore, rng: Random) {
+  constructor(gl: Context, shaders: ShaderStore) {
     this.program = shaders.getShader(Shaders.Nebulae)!;
     this.width = gl.drawingBufferWidth;
     this.height = gl.drawingBufferHeight;
@@ -78,6 +77,7 @@ export class NebulaeRenderer {
     this._falloffLocation = gl.getUniformLocation(this.program, "u_falloff")!;
     this._colorLocation = gl.getUniformLocation(this.program, "u_color")!;
     this._densityLocation = gl.getUniformLocation(this.program, "u_density")!;
+    bindVAO(gl, null);
   }
 
   render(
@@ -108,6 +108,7 @@ export class NebulaeRenderer {
     gl.uniform1f(this._densityLocation, opts.density);
 
     gl.drawArrays(GLConstants.TRIANGLES, 0, 6);
+    bindVAO(gl, null);
     return destination;
   }
 }
